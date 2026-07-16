@@ -1,59 +1,59 @@
 ;;; sov-core.el --- Core Emacs behavior -*- lexical-binding: t; -*-
 
 ;; startup and performance
-(setq gc-cons-threshold (* 64 1024 1024) ; 设置触发垃圾回收前允许分配的字节数
-      gc-cons-percentage 0.2 ; 设置相对堆大小增长多少后允许垃圾回收
-      read-process-output-max (* 1024 1024) ; 限制 Emacs 单次从子进程读取的最大字节数, 提高后可减少大消息分片, 但会增大瞬时分配
-      process-adaptive-read-buffering nil ; 关闭后, Emacs 通常会更及时地处理已经到达的进程输出
-      inhibit-startup-screen t ; 跳过 Emacs 启动画面, 直接显示初始 buffer
-      initial-scratch-message nil ; 关闭 *scratch* buffer 初始文本
+(setq gc-cons-threshold (* 64 1024 1024) ; set bytes allowed to allocate before triggering GC
+      gc-cons-percentage 0.2 ; set relative heap growth allowed before GC
+      read-process-output-max (* 1024 1024) ; limit max bytes Emacs reads from a subprocess at once; higher reduces fragmentation of large messages but increases transient allocation
+      process-adaptive-read-buffering nil ; when disabled, Emacs usually handles arrived process output more promptly
+      inhibit-startup-screen t ; skip the Emacs startup screen and show the initial buffer directly
+      initial-scratch-message nil ; disable initial text in the *scratch* buffer
       )
 
 ;; customize
-(setq custom-file (locate-user-emacs-file "custom.el")) ; 默认情况下, Customize 可能把内容直接写进你的 init.el, 要隔离这种自动生成的代码
+(setq custom-file (locate-user-emacs-file "custom.el")) ; by default, Customize may write directly into your init.el; isolate such auto-generated code
 (load custom-file 'noerror)
 
 
 ;; file, persistence and history
-(setq recentf-max-saved-items 200 ; 限制 recentf 持久化的最近文件数量
-      history-length 1000 ; 设置多数 minibuffer 历史列表保留的最大长度
-      history-delete-duplicates t ; 新增历史项时删除旧的重复项
-      auto-revert-verbose nil ; 关闭 auto-revert-mode 的重载提示消息
-      delete-by-moving-to-trash t ; 让删除文件命令优先移入系统回收站
+(setq recentf-max-saved-items 200 ; limit number of recent files persisted by recentf
+      history-length 1000 ; set maximum length kept for most minibuffer histories
+      history-delete-duplicates t ; delete old duplicates when adding new history entries
+      auto-revert-verbose nil ; suppress auto-revert-mode reload messages
+      delete-by-moving-to-trash t ; make delete-file commands move to system trash first
       )
 
-(recentf-mode 1) ; 记录最近访问的文件, 并提供持久化列表
-(savehist-mode 1) ; 跨会话保存 minibuffer 历史及额外指定的变量
-(save-place-mode 1) ; 近似 ShaDa 恢复 cursor position
-(global-auto-revert-mode 1) ; 当文件在编辑器外部被修改时, 自动重新读取磁盘上的最新内容, 无需手动确认
+(recentf-mode 1) ; keep a list of recently visited files and persist it
+(savehist-mode 1) ; save minibuffer history and specified variables across sessions
+(save-place-mode 1) ; roughly restore cursor position like ShaDa
+(global-auto-revert-mode 1) ; auto-reload the latest file content from disk when changed externally, without manual confirmation
 
 
 ;; display and interface
-(setq-default display-line-numbers-type 'relative ; 相对行号
-              cursor-type 'bar ; 光标形状
-              ring-bell-function #'ignore ; 禁用响铃铃声
+(setq-default display-line-numbers-type 'relative ; relative line numbers
+              cursor-type 'bar ; cursor shape
+              ring-bell-function #'ignore ; disable audible bell
               )
 
-(menu-bar-mode -1) ; 隐藏 GUI 顶层第一行菜单栏
-(tool-bar-mode -1) ; 隐藏 GUI 顶层第二行工具栏
-(scroll-bar-mode -1) ; 隐藏左侧图形滚动条
-(global-display-line-numbers-mode t) ; 全局开启列号
-(global-hl-line-mode 1) ; 全局高亮当前视觉行
-(column-number-mode 1) ; mode-line 不显示列号
-(show-paren-mode 1) ; 开启括号匹配高亮
-(blink-cursor-mode -1) ; 全局禁用光标闪烁
+(menu-bar-mode -1) ; hide the top GUI menu bar
+(tool-bar-mode -1) ; hide the top GUI tool bar
+(scroll-bar-mode -1) ; hide the left graphical scroll bar
+(global-display-line-numbers-mode t) ; enable column numbers globally
+(global-hl-line-mode 1) ; highlight current visual line globally
+(column-number-mode 1) ; mode-line does not display column number
+(show-paren-mode 1) ; enable paren matching highlight
+(blink-cursor-mode -1) ; disable cursor blinking globally
 
 ;; soft wraping
 (require 'kinsoku)
-(setq-default truncate-lines nil ; 软换行, 拒绝强行截断
-              word-wrap t ; 软换行在单词边界断开, 而不是窗口边缘
-              word-wrap-by-category t ; 改善 CJK 单词软换行体验
+(setq-default truncate-lines nil ; soft wrap; refuse forced truncation
+              word-wrap t ; soft wrap breaks at word boundaries, not window edges
+              word-wrap-by-category t ; improve CJK word soft-wrapping experience
               )
 
 (require 'visual-wrap)
-(setq visual-wrap-extra-indent 0) ; 原行换行不额外缩进字符
-(global-visual-line-mode 1) ; 全局开启视觉行, 不使用逻辑行
-(global-visual-wrap-prefix-mode 1) ; 让软换行后的续行继承原逻辑行的缩进
+(setq visual-wrap-extra-indent 0) ; do not add extra indentation to continuation lines
+(global-visual-line-mode 1) ; use visual lines globally instead of logical lines
+(global-visual-wrap-prefix-mode 1) ; make continuation lines after soft wrap inherit the original logical line indentation
 
 
 ;; editing indentation and whitespace
@@ -61,48 +61,48 @@
               tab-width 4
               fill-column 100)
 
-(setq sentence-end-double-space nil ; 不要求标点后两个空格
-      tab-always-indent 'complete ; tab 先尝试补全再尝试缩进
-      kill-ring-max 1000 ; 剪贴板大小
-      require-final-newline t ; 保存文件时自动补末尾换行
+(setq sentence-end-double-space nil ; do not require two spaces after sentence punctuation
+      tab-always-indent 'complete ; tab tries completion first, then indentation
+      kill-ring-max 1000 ; kill ring size
+      require-final-newline t ; auto-add final newline when saving files
       )
 
 (electric-pair-mode 1) ; autopair
 (electric-indent-mode 1) ; autoindent
-(delete-selection-mode 1) ; 输入替换选区, 对 evil 用户影响较小
+(delete-selection-mode 1) ; typing replaces the selected region; minimal impact on evil users
 
 
 ;; search, replace and navigation
 (setq-default case-fold-search t
-              ); 搜索和匹配默认忽略大小写
+              ); search and match ignore case by default
 
-(setq scroll-margin 5 ; 在 cursor 上下保留 10 行
-      scroll-conservatively 101 ; cursor 越过边界后不自动重新居中
-      recenter-positions '(middle top bottom) ; recenter-top-bottom 循环顺序
+(setq scroll-margin 5 ; keep 10 lines above and below the cursor
+      scroll-conservatively 101 ; do not auto-recenter after cursor moves past the boundary
+      recenter-positions '(middle top bottom) ; recenter-top-bottom cycle order
       )
 
-(repeat-mode 1) ; 让支持 repeat-map 的命令可用短键连续重复
+(repeat-mode 1) ; let commands supporting repeat-map be repeated with short keys
 
 
 ;; completion and minibuffer
-(setq completion-styles '(basic substring partial-completion) ; 搜索匹配算法顺序
-      completion-category-defaults nil ; 所有类别直接采用你的 completion-styles
-      completion-cycle-threshold 3 ; 候选不超过 3 个时循环
-      completion-ignore-case t ; completion 忽略大小写
-      read-buffer-completion-ignore-case t ; 读取 buffer 名忽略大小写
-      read-file-name-completion-ignore-case t ; 文件名补全忽略大小写
-      minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt) ; minibuffer 属性
+(setq completion-styles '(basic substring partial-completion) ; search matching algorithm order
+      completion-category-defaults nil ; all categories use your completion-styles directly
+      completion-cycle-threshold 3 ; cycle when there are no more than 3 candidates
+      completion-ignore-case t ; completion ignores case
+      read-buffer-completion-ignore-case t ; reading buffer names ignores case
+      read-file-name-completion-ignore-case t ; file name completion ignores case
+      minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt) ; minibuffer properties
       )
 
 
 ;; windows, frames and buffers
 (require 'uniquify)
-(setq window-combination-resize t ; 调整一个窗口大小时把同组合中的其他窗口作为整体重新分配
-      frame-resize-pixelwise t ; 像素级缩放 frame
-      use-dialog-box nil ; 绝不使用图形对话框
-      use-file-dialog nil ; 禁止使用系统文件选择对话框
-      use-short-answers t ; 让 yes-or-no 问题接受 y/n 简短回答
-      uniquify-buffer-name-style 'forward ; 打开同名文件时, Emacs 在前面加路径区分它们
+(setq window-combination-resize t ; when resizing one window, redistribute other windows in the same combination as a whole
+      frame-resize-pixelwise t ; resize frame pixel-wise
+      use-dialog-box nil ; never use graphical dialog boxes
+      use-file-dialog nil ; forbid using system file selection dialogs
+      use-short-answers t ; allow y/n short answers for yes-or-no questions
+      uniquify-buffer-name-style 'forward ; when opening files with the same name, Emacs prefixes the path to distinguish them
       )
 
 
@@ -110,30 +110,30 @@
 (make-directory (locate-user-emacs-file "backups/") t)
 (make-directory (locate-user-emacs-file "auto-save/") t)
 
-(setq make-backup-files t ; Emacs 保存文件创建备份文件, 即 *~ 文件
-      backup-directory-alist `(("." . ,(locate-user-emacs-file "backups/"))) ; 将 Emacs 备份文件统一放在用户管理系统的 backups/ 下
-      backup-by-copying t ; 用复制而非重命名原文件的方式制作备份
-      version-control t ; 每次生成带编号的备份, 可以保留历史版本
-      kept-new-versions 6 ; 保留 6 个较新版本
-      kept-old-versions 2 ; 保留 2 个较旧版本
-      delete-old-versions t ; 超过保留数量时自动删除旧编号备份
-      auto-save-default t ; 普通文件启用自动保存
+(setq make-backup-files t ; Emacs creates backup files when saving, i.e., *~ files
+      backup-directory-alist `(("." . ,(locate-user-emacs-file "backups/"))) ; put all Emacs backup files under the user-managed backups/
+      backup-by-copying t ; make backups by copying instead of renaming the original file
+      version-control t ; create numbered backups each time to keep historical versions
+      kept-new-versions 6 ; keep 6 newer versions
+      kept-old-versions 2 ; keep 2 older versions
+      delete-old-versions t ; auto-delete old numbered backups when exceeding kept count
+      auto-save-default t ; enable auto-save for ordinary files
       auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "auto-save/") t))
       )
 
 
 ;; processes, compilation and diagnostics
-(setq compilation-scroll-output 'first-error ; 出现第一个错误后, 停止编译自动滚动
-      comint-prompt-read-only ; 效果是不能删除或修改类似这种提示符: user@host:~$, >>>
-      next-error-recenter '(4) ; 错误行显示在窗口中央
+(setq compilation-scroll-output 'first-error ; stop auto-scrolling compilation after the first error
+      comint-prompt-read-only ; effect: cannot delete or modify prompts like user@host:~$, >>>
+      next-error-recenter '(4) ; show the error line in the center of the window
       )
 
-(add-hook 'prog-mode-hook #'flymake-mode) ; 为编程模式启用 diagnostics
+(add-hook 'prog-mode-hook #'flymake-mode) ; enable diagnostics for programming modes
 
 
 ;; projects languages, and treesit
-(setq project-vc-extra-root-markers '(".project.el")) ; 为项目添加根目录标记
-(setopt treesit-font-lock-level 4) ; treesitter 最大程度高亮
+(setq project-vc-extra-root-markers '(".project.el")) ; add root directory markers for projects
+(setopt treesit-font-lock-level 4) ; maximum treesitter highlighting
 
 
 ;; others
