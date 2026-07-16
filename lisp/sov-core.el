@@ -30,6 +30,8 @@
 
 ;; display and interface
 (setq-default display-line-numbers-type 'relative ; 相对行号
+              cursor-type 'bar ; 光标形状
+              ring-bell-function #'ignore ; 禁用响铃铃声
               )
 
 (menu-bar-mode -1) ; 隐藏 GUI 顶层第一行菜单栏
@@ -39,8 +41,10 @@
 (global-hl-line-mode 1) ; 全局高亮当前视觉行
 (column-number-mode 1) ; mode-line 不显示列号
 (show-paren-mode 1) ; 开启括号匹配高亮
+(blink-cursor-mode -1) ; 全局禁用光标闪烁
 
 ;; soft wraping
+(require 'kinsoku)
 (setq-default truncate-lines nil ; 软换行, 拒绝强行截断
               word-wrap t ; 软换行在单词边界断开, 而不是窗口边缘
               word-wrap-by-category t ; 改善 CJK 单词软换行体验
@@ -51,14 +55,26 @@
 (global-visual-line-mode 1) ; 全局开启视觉行, 不使用逻辑行
 (global-visual-wrap-prefix-mode 1) ; 让软换行后的续行继承原逻辑行的缩进
 
-(setq ring-bell-function #'ignore
-      use-short-answers t
+;; editing indentation and whitespace
+(setq-default indent-tabs-mode nil
+              tab-width 4
+              fill-column 100)
+
+(setq sentence-end-double-space nil ; 不要求标点后两个空格
+      tab-always-indent 'complete ; tab 先尝试补全再尝试缩进
+      kill-ring-max 1000 ; 剪贴板大小
+      require-final-newline t ; 保存文件时自动补末尾换行
+      )
+
+(electric-pair-mode 1) ; autopair
+(electric-indent-mode 1) ; autoindent
+
+
+
+(setq use-short-answers t
       confirm-kill-emacs #'yes-or-no-p
       sentence-end-double-space nil)
 
-(setq-default indent-tabs-mode nil
-              tab-width 4
-              fill-column 80)
 
 
 (delete-selection-mode 1)
