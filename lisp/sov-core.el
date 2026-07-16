@@ -122,9 +122,16 @@
       )
 
 
+;; processes, compilation and diagnostics
+(setq compilation-scroll-output 'first-error ; 出现第一个错误后, 停止编译自动滚动
+      comint-prompt-read-only ; 效果是不能删除或修改类似这种提示符: user@host:~$, >>>
+      next-error-recenter '(4) ; 错误行显示在窗口中央
+      )
 
-(setq use-short-answers t
-      confirm-kill-emacs #'yes-or-no-p
+(add-hook 'prog-mode-hook #'flymake-mode) ; 为编程模式启用 diagnostics
+
+
+(setq confirm-kill-emacs #'yes-or-no-p
       sentence-end-double-space nil)
 
 
