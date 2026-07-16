@@ -43,10 +43,13 @@
 ;; soft wraping
 (setq-default truncate-lines nil ; 软换行, 拒绝强行截断
               word-wrap t ; 软换行在单词边界断开, 而不是窗口边缘
-              word-wrap-by-category t ;
+              word-wrap-by-category t ; 改善 CJK 单词软换行体验
               )
 
-(global-visual-line-mode 1) ; 开始
+(require 'visual-wrap)
+(setq visual-wrap-extra-indent 0) ; 原行换行不额外缩进字符
+(global-visual-line-mode 1) ; 全局开启视觉行, 不使用逻辑行
+(global-visual-wrap-prefix-mode 1) ; 让软换行后的续行继承原逻辑行的缩进
 
 (setq ring-bell-function #'ignore
       use-short-answers t
