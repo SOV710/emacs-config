@@ -80,6 +80,8 @@
       recenter-positions '(middle top bottom) ; recenter-top-bottom 循环顺序
       )
 
+(repeat-mode 1) ; 让支持 repeat-map 的命令可用短键连续重复
+
 
 
 (setq use-short-answers t
