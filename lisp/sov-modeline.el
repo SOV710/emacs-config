@@ -9,6 +9,12 @@
 
 (declare-function nerd-icons-icon-for-file "nerd-icons" (file &rest args))
 (declare-function nerd-icons-icon-for-mode "nerd-icons" (mode &rest args))
+(declare-function nerd-icons-powerline-family "nerd-icons" ())
+
+(defconst sov-ui--separator-lower-left "\ue0b8")
+(defconst sov-ui--separator-lower-right "\ue0ba")
+(defconst sov-ui--separator-upper-left "\ue0bc")
+(defconst sov-ui--separator-upper-right "\ue0be")
 
 (defface sov-ui-mode-line-normal
   '((t (:inherit mode-line :weight bold)))
@@ -377,11 +383,18 @@
    face :background
    (sov-ui--face-color 'mode-line :background "black")))
 
-(defun sov-ui--separator (glyph foreground-face background-face)
+(defun sov-ui--powerline-glyph (glyph foreground background)
   (propertize
    glyph
-   'face `(:foreground ,(sov-ui--face-background foreground-face)
-           :background ,(sov-ui--face-background background-face))))
+   'face `(:family ,(nerd-icons-powerline-family)
+           :foreground ,foreground
+           :background ,background)))
+
+(defun sov-ui--separator (glyph foreground-face background-face)
+  (sov-ui--powerline-glyph
+   glyph
+   (sov-ui--face-background foreground-face)
+   (sov-ui--face-background background-face)))
 
 (defun sov-ui--state-segment (compact branch-visible)
   (pcase-let* ((`(,label ,face)
@@ -394,7 +407,10 @@
     (concat
      (propertize (format "  %s " label) 'face face)
      (sov-ui--separator
-      (if branch-visible "◣" "◤") face next-face))))
+      (if branch-visible
+          sov-ui--separator-lower-left
+        sov-ui--separator-upper-left)
+      face next-face))))
 
 (defun sov-ui--branch-segment (branch)
   (if branch
@@ -402,7 +418,8 @@
        (propertize (format "  %s " branch)
                    'face 'sov-ui-mode-line-branch)
        (sov-ui--separator
-        "◤" 'sov-ui-mode-line-branch 'mode-line))
+        sov-ui--separator-upper-left
+        'sov-ui-mode-line-branch 'mode-line))
     ""))
 
 (defun sov-ui--flymake-segment ()
@@ -457,16 +474,14 @@
                         (format-mode-line "%l:%c")))
                (percent (format-mode-line "%p")))
     (list
-     (propertize "◢"
-                 'face `(:foreground ,secondary
-                         :background ,base))
+     (sov-ui--powerline-glyph
+      sov-ui--separator-lower-right secondary base)
      (propertize (format " %s " ruler)
                  'face `(:inherit sov-ui-mode-line-ruler
                          :foreground ,state-color
                          :background ,secondary))
-     (propertize "◥"
-                 'face `(:foreground ,state-color
-                         :background ,secondary))
+     (sov-ui--powerline-glyph
+      sov-ui--separator-upper-right state-color secondary)
      (propertize (format " %s " percent)
                  'face `(:inherit sov-ui-mode-line-percent
                          :foreground ,dark
