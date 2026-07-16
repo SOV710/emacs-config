@@ -9,7 +9,9 @@
 
 (declare-function nerd-icons-icon-for-file "nerd-icons" (file &rest args))
 (declare-function nerd-icons-icon-for-mode "nerd-icons" (mode &rest args))
+(declare-function nerd-icons-flicon "nerd-icons" (icon-name &rest args))
 (declare-function nerd-icons-mdicon "nerd-icons" (icon-name &rest args))
+(declare-function nerd-icons-powerline "nerd-icons" (icon-name &rest args))
 (declare-function nerd-icons-powerline-family "nerd-icons" ())
 
 (defconst sov-ui--separator-lower-left "\ue0b8")
@@ -127,13 +129,29 @@
   (delq nil
         (list
          (when (buffer-narrowed-p)
-           '(narrow "󰘕" "Narrow"))
+           (list 'narrow
+                 (sov-ui--safe-icon
+                  #'nerd-icons-mdicon "nf-md-arrow_collapse"
+                  "N" 'sov-ui-mode-line-condition)
+                 "Narrow"))
          (when (file-remote-p default-directory)
-           '(remote "󰣀" "Remote"))
+           (list 'remote
+                 (sov-ui--safe-icon
+                  #'nerd-icons-mdicon "nf-md-ssh"
+                  "R" 'sov-ui-mode-line-condition)
+                 "Remote"))
          (when defining-kbd-macro
-           '(macro "󰑋" "REC"))
+           (list 'macro
+                 (sov-ui--safe-icon
+                  #'nerd-icons-mdicon "nf-md-record_rec"
+                  "K" 'sov-ui-mode-line-condition)
+                 "REC"))
          (when (get-buffer-process (current-buffer))
-           '(process "󰆍" "Proc")))))
+           (list 'process
+                 (sov-ui--safe-icon
+                  #'nerd-icons-mdicon "nf-md-map"
+                  "P" 'sov-ui-mode-line-condition)
+                 "Proc")))))
 
 (use-package nerd-icons
   :ensure t)
@@ -277,9 +295,10 @@
   (force-mode-line-update))
 
 (defun sov-ui--safe-icon (function argument fallback face)
-  (condition-case nil
-      (or (funcall function argument :face face) fallback)
-    (error fallback)))
+  (let ((fallback (propertize fallback 'face face)))
+    (condition-case nil
+        (or (funcall function argument :face face) fallback)
+      (error fallback))))
 
 (defun sov-ui--file-icon ()
   (or sov-ui--file-icon-cache
@@ -287,17 +306,17 @@
             (if buffer-file-name
                 (sov-ui--safe-icon
                  #'nerd-icons-icon-for-file buffer-file-name
-                 "󰈔" 'sov-ui-mode-line-file)
+                 "F" 'sov-ui-mode-line-file)
               (sov-ui--safe-icon
                #'nerd-icons-icon-for-mode major-mode
-               "󰈙" 'sov-ui-mode-line-file)))))
+               "B" 'sov-ui-mode-line-file)))))
 
 (defun sov-ui--major-icon ()
   (or sov-ui--major-icon-cache
       (setq sov-ui--major-icon-cache
             (sov-ui--safe-icon
              #'nerd-icons-icon-for-mode major-mode
-             "󰅩" 'sov-ui-mode-line-major))))
+             "M" 'sov-ui-mode-line-major))))
 
 (defun sov-ui--current-paths ()
   (or sov-ui--path-cache
@@ -410,7 +429,10 @@
                               'sov-ui-mode-line-branch
                             'mode-line)))
     (concat
-     (propertize (format "  %s " label) 'face face)
+     (propertize " " 'face face)
+     (sov-ui--safe-icon
+      #'nerd-icons-flicon "nf-linux-gentoo" "E" face)
+     (propertize (format " %s " label) 'face face)
      (sov-ui--separator
       (if branch-visible
           sov-ui--separator-lower-left
@@ -420,7 +442,11 @@
 (defun sov-ui--branch-segment (branch)
   (if branch
       (concat
-       (propertize (format "  %s " branch)
+       (propertize " " 'face 'sov-ui-mode-line-branch)
+       (sov-ui--safe-icon
+        #'nerd-icons-powerline "nf-pl-branch"
+        "G" 'sov-ui-mode-line-branch)
+       (propertize (format " %s " branch)
                    'face 'sov-ui-mode-line-branch)
        (sov-ui--separator
         sov-ui--separator-upper-left
@@ -431,22 +457,34 @@
   (pcase-let ((`(,errors ,warnings) (sov-ui--flymake-counts)))
     (concat
      (if (> errors 0)
-         (propertize (format " 󰅚 %d" errors)
-                     'face 'sov-ui-mode-line-error)
+         (concat
+          (propertize " " 'face 'sov-ui-mode-line-error)
+          (sov-ui--safe-icon
+           #'nerd-icons-mdicon "nf-md-close_circle_outline"
+           "E" 'sov-ui-mode-line-error)
+          (propertize (format " %d" errors)
+                      'face 'sov-ui-mode-line-error))
        "")
      (if (> warnings 0)
-         (propertize (format " 󰀪 %d" warnings)
-                     'face 'sov-ui-mode-line-warning)
+         (concat
+          (propertize " " 'face 'sov-ui-mode-line-warning)
+          (sov-ui--safe-icon
+           #'nerd-icons-mdicon "nf-md-alert_outline"
+           "W" 'sov-ui-mode-line-warning)
+          (propertize (format " %d" warnings)
+                      'face 'sov-ui-mode-line-warning))
        ""))))
 
 (defun sov-ui--conditions-segment (compact)
   (mapconcat
    (lambda (item)
-     (propertize
-      (format " %s%s"
-              (nth 1 item)
-              (if compact "" (concat " " (nth 2 item))))
-      'face 'sov-ui-mode-line-condition))
+     (concat
+      (propertize " " 'face 'sov-ui-mode-line-condition)
+      (nth 1 item)
+      (if compact
+          ""
+        (propertize (concat " " (nth 2 item))
+                    'face 'sov-ui-mode-line-condition))))
    (sov-ui--condition-items)
    ""))
 

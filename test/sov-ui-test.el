@@ -73,6 +73,18 @@
         (should (equal (mapcar #'car (sov-ui--condition-items))
                        '(narrow remote macro process)))))))
 
+(ert-deftest sov-ui-test-condition-icon-keeps-font-family ()
+  (with-temp-buffer
+    (insert "ab")
+    (narrow-to-region 1 2)
+    (cl-letf (((symbol-function 'nerd-icons-mdicon)
+               (lambda (&rest _)
+                 (propertize "I" 'face '(:family "Test Icons")))))
+      (let* ((segment (sov-ui--conditions-segment t))
+             (position (string-match "I" segment))
+             (face (get-text-property position 'face segment)))
+        (should (equal (plist-get face :family) "Test Icons"))))))
+
 (ert-deftest sov-ui-test-cache-diff-hunks-preserves-return-value ()
   (with-temp-buffer
     (let ((changes '((1 1 insert) (4 2 change) (9 1 delete))))
