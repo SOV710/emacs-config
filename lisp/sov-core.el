@@ -137,8 +137,9 @@
 (setopt treesit-font-lock-level 4) ; treesitter 最大程度高亮
 
 
-(setq confirm-kill-emacs #'yes-or-no-p
-      sentence-end-double-space nil)
+;; others
+
+(setq confirm-kill-emacs #'yes-or-no-p)
 
 
 
