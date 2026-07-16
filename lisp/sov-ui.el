@@ -1,4 +1,4 @@
-;;; sov-ui.el --- UI Configuration -*- lexical-binding: t; -*-
+;;; sov-ui.el --- UI configuration -*- lexical-binding: t; -*-
 
 ;; color scheme
 (use-package tokyo-night
@@ -8,4 +8,7 @@
   :config
   (load-theme 'tokyo-night t))
 
+(require 'sov-modeline)
+
 (provide 'sov-ui)
+;;; sov-ui.el ends here
