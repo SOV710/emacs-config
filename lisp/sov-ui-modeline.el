@@ -9,6 +9,7 @@
 
 (declare-function nerd-icons-icon-for-file "nerd-icons" (file &rest args))
 (declare-function nerd-icons-icon-for-mode "nerd-icons" (mode &rest args))
+(declare-function nerd-icons-mdicon "nerd-icons" (icon-name &rest args))
 (declare-function nerd-icons-powerline-family "nerd-icons" ())
 
 (defconst sov-ui--separator-lower-left "\ue0b8")
@@ -316,7 +317,11 @@
        (propertize " *" 'face 'sov-ui-mode-line-modified)
      "")
    (if buffer-read-only
-       (propertize " 󰌾" 'face 'sov-ui-mode-line-read-only)
+       (concat
+        " "
+        (sov-ui--safe-icon
+         #'nerd-icons-mdicon "nf-md-lock"
+         "RO" 'sov-ui-mode-line-read-only))
      "")))
 
 (defun sov-ui--file-segment (path-index inactive &optional max-width)
