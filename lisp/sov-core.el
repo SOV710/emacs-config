@@ -75,8 +75,9 @@
 (setq-default case-fold-search t
               ); 搜索和匹配默认忽略大小写
 
-(setq scroll-margin 10 ; 在 cursor 上下保留 10 行
+(setq scroll-margin 5 ; 在 cursor 上下保留 10 行
       scroll-conservatively 101 ; cursor 越过边界后不自动重新居中
+      recenter-positions '(middle top bottom) ; recenter-top-bottom 循环顺序
       )
 
 
