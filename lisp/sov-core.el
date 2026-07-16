@@ -37,9 +37,9 @@
 (menu-bar-mode -1) ; hide the top GUI menu bar
 (tool-bar-mode -1) ; hide the top GUI tool bar
 (scroll-bar-mode -1) ; hide the left graphical scroll bar
-(global-display-line-numbers-mode t) ; enable column numbers globally
+(global-display-line-numbers-mode t) ; enable line numbers globally
 (global-hl-line-mode 1) ; highlight current visual line globally
-(column-number-mode 1) ; mode-line does not display column number
+(column-number-mode 1) ; show column number in mode-line
 (show-paren-mode 1) ; enable paren matching highlight
 (blink-cursor-mode -1) ; disable cursor blinking globally
 
@@ -76,7 +76,7 @@
 (setq-default case-fold-search t
               ); search and match ignore case by default
 
-(setq scroll-margin 5 ; keep 10 lines above and below the cursor
+(setq scroll-margin 5 ; keep 5 lines above and below the cursor
       scroll-conservatively 101 ; do not auto-recenter after cursor moves past the boundary
       recenter-positions '(middle top bottom) ; recenter-top-bottom cycle order
       )
@@ -124,7 +124,7 @@
 
 ;; processes, compilation and diagnostics
 (setq compilation-scroll-output 'first-error ; stop auto-scrolling compilation after the first error
-      comint-prompt-read-only ; effect: cannot delete or modify prompts like user@host:~$, >>>
+      comint-prompt-read-only t ; effect: cannot delete or modify prompts like user@host:~$, >>>
       next-error-recenter '(4) ; show the error line in the center of the window
       )
 
