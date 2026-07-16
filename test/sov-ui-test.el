@@ -6,6 +6,9 @@
 (ert-deftest sov-ui-test-modeline-module-loaded ()
   (should (featurep 'sov-ui-modeline)))
 
+(ert-deftest sov-ui-test-dashboard-module-loaded ()
+  (should (featurep 'sov-ui-dashboard)))
+
 (ert-deftest sov-ui-test-powerline-separator-glyphs ()
   (should (equal (list sov-ui--separator-lower-left
                        sov-ui--separator-lower-right
@@ -95,6 +98,15 @@
         (should (string-match-p "lisp/sov-ui.el" segment))
         (should-not (get-text-property 0 'keymap segment))
         (should-not (get-text-property 0 'mouse-face segment))))))
+
+(ert-deftest sov-ui-test-read-only-flag-uses-nerd-icon-function ()
+  (with-temp-buffer
+    (setq buffer-read-only t)
+    (cl-letf (((symbol-function 'nerd-icons-mdicon)
+               (lambda (name &rest _)
+                 (format "<%s>" name))))
+      (should (equal (sov-ui--buffer-flags)
+                     " <nf-md-lock>")))))
 
 (ert-deftest sov-ui-test-branch-normalization ()
   (with-temp-buffer

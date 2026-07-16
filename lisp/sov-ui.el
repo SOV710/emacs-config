@@ -8,6 +8,7 @@
   :config
   (load-theme 'tokyo-night t))
 
+(require 'sov-ui-dashboard)
 (require 'sov-ui-modeline)
 
 (provide 'sov-ui)

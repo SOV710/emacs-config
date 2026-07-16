@@ -88,6 +88,7 @@
 (elpaca elpaca-use-package
   ;; Enable use-package :ensure support for Elpaca.
   (elpaca-use-package-mode))
+(elpaca-wait)
 
 
 (require 'sov-core)
