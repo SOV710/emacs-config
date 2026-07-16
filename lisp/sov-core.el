@@ -83,6 +83,16 @@
 (repeat-mode 1) ; 让支持 repeat-map 的命令可用短键连续重复
 
 
+;; completion and minibuffer
+
+(setq completion-styles '(basic substring partial-completion) ; 搜索匹配算法顺序
+      completion-category-defaults nil ; 所有类别直接采用你的 completion-styles
+      completion-cycle-threshold 3 ; 候选不超过 3 个时循环
+      completion-ignore-case t ; completion 忽略大小写
+      read-buffer-completion-ignore-case t ; 读取 buffer 名忽略大小写
+      read-file-name-completion-ignore-case t ; 文件名补全忽略大小写
+      minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt) ; minibuffer 属性
+      )
 
 (setq use-short-answers t
       confirm-kill-emacs #'yes-or-no-p
