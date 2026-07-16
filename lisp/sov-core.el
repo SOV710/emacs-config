@@ -101,7 +101,6 @@
 
 
 (delete-selection-mode 1)
-(electric-pair-mode 1)
 
 
 (provide 'sov-core)
