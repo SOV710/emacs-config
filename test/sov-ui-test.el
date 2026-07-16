@@ -134,6 +134,9 @@
             mode-line-format-right-align
             (:eval (sov-ui--mode-line-right))))))
 
+(ert-deftest sov-ui-test-mode-line-aligns-before-right-fringe ()
+  (should (eq mode-line-right-align-edge 'right-fringe)))
+
 (ert-deftest sov-ui-test-inactive-layout-has-no-right-content ()
   (with-temp-buffer
     (cl-letf (((symbol-function 'sov-ui--file-icon)

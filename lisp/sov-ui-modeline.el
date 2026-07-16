@@ -619,6 +619,8 @@
                'sov-ui--mode-line-layout)))
     (sov-ui--layout-right layout)))
 
+(setq mode-line-right-align-edge 'right-fringe)
+
 (setq-default mode-line-format
               '((:eval (sov-ui--mode-line-left))
                 mode-line-format-right-align
