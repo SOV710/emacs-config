@@ -131,6 +131,12 @@
 (add-hook 'prog-mode-hook #'flymake-mode) ; 为编程模式启用 diagnostics
 
 
+;; projects languages, and treesit
+
+(setq project-vc-extra-root-markers '(".project.el")) ; 为项目添加根目录标记
+(setopt treesit-font-lock-level 4) ; treesitter 最大程度高亮
+
+
 (setq confirm-kill-emacs #'yes-or-no-p
       sentence-end-double-space nil)
 
