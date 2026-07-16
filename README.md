@@ -1,6 +1,6 @@
 <div align="center">
 
-  ![logo](https://preview.github.sov710.org/emacs-config/emacs-logo.svg)
+  <img src="https://preview.github.sov710.org/emacs-config/emacs-logo.svg" width="200" height="200">
 
   # SOV710's Emacs Configuration
 
