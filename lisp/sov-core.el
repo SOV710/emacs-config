@@ -106,6 +106,23 @@
       )
 
 
+;; undo backup and auto save
+(make-directory (locate-user-emacs-file "backups/") t)
+(make-directory (locate-user-emacs-file "auto-save/") t)
+
+(setq make-backup-files t ; Emacs 保存文件创建备份文件, 即 *~ 文件
+      backup-directory-alist `(("." . ,(locate-user-emacs-file "backups/"))) ; 将 Emacs 备份文件统一放在用户管理系统的 backups/ 下
+      backup-by-copying t ; 用复制而非重命名原文件的方式制作备份
+      version-control t ; 每次生成带编号的备份, 可以保留历史版本
+      kept-new-versions 6 ; 保留 6 个较新版本
+      kept-old-versions 2 ; 保留 2 个较旧版本
+      delete-old-versions t ; 超过保留数量时自动删除旧编号备份
+      auto-save-default t ; 普通文件启用自动保存
+      auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "auto-save/") t))
+      )
+
+
+
 (setq use-short-answers t
       confirm-kill-emacs #'yes-or-no-p
       sentence-end-double-space nil)
