@@ -85,7 +85,6 @@
 
 
 ;; completion and minibuffer
-
 (setq completion-styles '(basic substring partial-completion) ; 搜索匹配算法顺序
       completion-category-defaults nil ; 所有类别直接采用你的 completion-styles
       completion-cycle-threshold 3 ; 候选不超过 3 个时循环
@@ -139,9 +138,6 @@
 
 ;; others
 (setq confirm-kill-emacs #'yes-or-no-p)
-
-
-
 
 
 (provide 'sov-core)
