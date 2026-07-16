@@ -1,0 +1,33 @@
+# Package manager
+/elpaca/
+
+# Compiled
+/eln-cache/
+*.elc
+*.eln
+
+# Packaging
+.cask/
+.eask/
+.eldev/
+.keg/
+
+# Runtime state
+/auto-save-list/
+/history
+/places
+/recentf
+/custom.el
+
+# Common state files
+/bookmarks
+/project-list
+/network-security.data
+/tramp
+/url/
+/transient/
+
+# Backup, auto-save, and lock files
+*~
+\#*\#
+.\#*
