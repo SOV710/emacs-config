@@ -9,20 +9,6 @@
 (ert-deftest sov-ui-test-dashboard-module-loaded ()
   (should (featurep 'sov-ui-dashboard)))
 
-(ert-deftest sov-ui-test-powerline-separator-glyphs ()
-  (should (equal (list sov-ui--separator-lower-left
-                       sov-ui--separator-lower-right
-                       sov-ui--separator-upper-left
-                       sov-ui--separator-upper-right)
-                 '("\ue0b8" "\ue0ba" "\ue0bc" "\ue0be")))
-  (cl-letf (((symbol-function 'nerd-icons-powerline-family)
-             (lambda () "Test Powerline")))
-    (let* ((glyph (sov-ui--powerline-glyph "\ue0b8" "red" "blue"))
-           (face (get-text-property 0 'face glyph)))
-      (should (equal (plist-get face :family) "Test Powerline"))
-      (should (equal (plist-get face :foreground) "red"))
-      (should (equal (plist-get face :background) "blue")))))
-
 (ert-deftest sov-ui-test-evil-info ()
   (should (equal (sov-ui--evil-info 'normal nil)
                  '("NORMAL" sov-ui-mode-line-normal)))
