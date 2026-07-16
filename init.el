@@ -90,7 +90,23 @@
   (elpaca-use-package-mode))
 (elpaca-wait)
 
+;; Basic Font Size
+(defconst sov-default-font-family "Smile Nerd Font Mono")
+(defconst sov-default-font-height 180)
+
+(defun sov-apply-font (&optional frame)
+  "Apply the configured font to FRAME."
+  (with-selected-frame (or frame (selected-frame))
+    (set-face-attribute 'default frame
+                        :family sov-default-font-family
+                        :height sov-default-font-height)))
+
+(setq default-frame-alist
+      '((width . 110)
+        (height . 38)))
 
 (require 'sov-core)
 (require 'sov-evil)
 (require 'sov-ui)
+(sov-apply-font)
+(add-hook 'after-make-frame-functions #'sov-apply-font)
