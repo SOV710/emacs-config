@@ -94,6 +94,18 @@
       minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt) ; minibuffer 属性
       )
 
+
+;; windows, frames and buffers
+(require 'uniquify)
+(setq window-combination-resize t ; 调整一个窗口大小时把同组合中的其他窗口作为整体重新分配
+      frame-resize-pixelwise t ; 像素级缩放 frame
+      use-dialog-box nil ; 绝不使用图形对话框
+      use-file-dialog nil ; 禁止使用系统文件选择对话框
+      use-short-answers t ; 让 yes-or-no 问题接受 y/n 简短回答
+      uniquify-buffer-name-style 'forward ; 打开同名文件时, Emacs 在前面加路径区分它们
+      )
+
+
 (setq use-short-answers t
       confirm-kill-emacs #'yes-or-no-p
       sentence-end-double-space nil)
