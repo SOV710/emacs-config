@@ -55,6 +55,7 @@
 (global-visual-line-mode 1) ; 全局开启视觉行, 不使用逻辑行
 (global-visual-wrap-prefix-mode 1) ; 让软换行后的续行继承原逻辑行的缩进
 
+
 ;; editing indentation and whitespace
 (setq-default indent-tabs-mode nil
               tab-width 4
@@ -68,6 +69,15 @@
 
 (electric-pair-mode 1) ; autopair
 (electric-indent-mode 1) ; autoindent
+
+
+;; search, replace and navigation
+(setq-default case-fold-search t
+              ); 搜索和匹配默认忽略大小写
+
+(setq scroll-margin 10 ; 在 cursor 上下保留 10 行
+      scroll-conservatively 101 ; cursor 越过边界后不自动重新居中
+      )
 
 
 
