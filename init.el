@@ -92,3 +92,4 @@
 
 (require 'sov-core)
 (require 'sov-evil)
+(require 'sov-ui)
