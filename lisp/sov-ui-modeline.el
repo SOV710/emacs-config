@@ -1,4 +1,4 @@
-;;; sov-modeline.el --- Custom mode line -*- lexical-binding: t; -*-
+;;; sov-ui-modeline.el --- Custom mode line -*- lexical-binding: t; -*-
 
 (require 'cl-lib)
 (require 'seq)
@@ -616,5 +616,5 @@
                 mode-line-format-right-align
                 (:eval (sov-ui--mode-line-right))))
 
-(provide 'sov-modeline)
-;;; sov-modeline.el ends here
+(provide 'sov-ui-modeline)
+;;; sov-ui-modeline.el ends here

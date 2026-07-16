@@ -8,7 +8,7 @@
   :config
   (load-theme 'tokyo-night t))
 
-(require 'sov-modeline)
+(require 'sov-ui-modeline)
 
 (provide 'sov-ui)
 ;;; sov-ui.el ends here

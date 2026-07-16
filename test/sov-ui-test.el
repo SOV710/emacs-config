@@ -4,7 +4,7 @@
 (require 'sov-ui)
 
 (ert-deftest sov-ui-test-modeline-module-loaded ()
-  (should (featurep 'sov-modeline)))
+  (should (featurep 'sov-ui-modeline)))
 
 (ert-deftest sov-ui-test-powerline-separator-glyphs ()
   (should (equal (list sov-ui--separator-lower-left
