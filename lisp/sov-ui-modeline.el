@@ -222,10 +222,6 @@
   '((t (:inherit mode-line :weight bold)))
   "Ruler block.")
 
-(defface sov-ui-mode-line-percent
-  '((t (:inherit mode-line :weight bold)))
-  "Percentage block.")
-
 (defface sov-ui-mode-line-inactive
   '((t (:inherit mode-line-inactive)))
   "Inactive content.")
@@ -268,9 +264,6 @@
                         :foreground 'unspecified
                         :background secondary)
     (set-face-attribute 'sov-ui-mode-line-ruler nil
-                        :foreground (cdar states)
-                        :background secondary)
-    (set-face-attribute 'sov-ui-mode-line-percent nil
                         :foreground dark
                         :background (cdar states)))
   (force-mode-line-update t))
@@ -474,8 +467,6 @@
                  (if (boundp 'evil-state) evil-state 'emacs)
                  nil))
                (state-color (sov-ui--face-background state-face))
-               (secondary
-                (sov-ui--face-background 'sov-ui-mode-line-branch))
                (dark (sov-ui--face-color
                       'default :background "black"))
                (ruler (if (use-region-p)
@@ -483,15 +474,10 @@
                            (region-beginning)
                            (region-end)
                            (sov-ui--selection-kind))
-                        (format-mode-line "%l:%c")))
-               (percent (format-mode-line "%p")))
+                        (format-mode-line "%l:%c"))))
     (list
-     (propertize (format " %s " ruler)
+     (propertize (format " %s  " ruler)
                  'face `(:inherit sov-ui-mode-line-ruler
-                         :foreground ,state-color
-                         :background ,secondary))
-     (propertize (format " %s " percent)
-                 'face `(:inherit sov-ui-mode-line-percent
                          :foreground ,dark
                          :background ,state-color)))))
 

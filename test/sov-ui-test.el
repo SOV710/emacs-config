@@ -137,6 +137,11 @@
 (ert-deftest sov-ui-test-mode-line-aligns-before-right-fringe ()
   (should (eq mode-line-right-align-edge 'right-fringe)))
 
+(ert-deftest sov-ui-test-ruler-occupies-final-block ()
+  (let ((segments (sov-ui--ruler-segments)))
+    (should (= (length segments) 1))
+    (should (string-suffix-p "  " (car segments)))))
+
 (ert-deftest sov-ui-test-inactive-layout-has-no-right-content ()
   (with-temp-buffer
     (cl-letf (((symbol-function 'sov-ui--file-icon)
