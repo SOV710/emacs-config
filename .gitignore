@@ -27,7 +27,7 @@
 /url/
 /transient/
 
-# Backup, auto-save, and lock files
+# Emacs temporary files
 *~
 \#*\#
 .\#*
