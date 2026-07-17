@@ -19,6 +19,16 @@
   :ensure (:host github
            :repo "emacs-dashboard/emacs-dashboard"
            :wait t)
+  :custom
+  (dashboard-startup-banner 'logo)
+  (dashboard-items '((recents . 5)
+                     (bookmarks . 5)
+                     (projects . 5)))
+  (dashboard-projects-backend 'projectile)
+  (dashboard-display-icons-p t)
+  (dashboard-icon-type 'nerd-icons)
+  (dashboard-set-heading-icons t)
+  (dashboard-set-file-icons t)
   :config
   (dashboard-setup-startup-hook))
 
