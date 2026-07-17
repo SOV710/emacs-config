@@ -25,6 +25,15 @@
         (dirvish-subtree-toggle)
       (dired-find-file))))
 
+(defun sov-dirvish-side-toggle ()
+  "Open Dirvish Side, or close it whenever it is already visible."
+  (interactive)
+  (let ((window (dirvish-side--session-visible-p)))
+    (if window
+        (with-selected-window window
+          (dirvish-quit))
+      (dirvish-side))))
+
 (use-package dirvish
   :ensure (:host github
            :repo "alexluigit/dirvish"
@@ -44,11 +53,11 @@
       '(vc-state nerd-icons collapse file-size))
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>o") #'dirvish-dwim
-    (kbd "<leader>e") #'dirvish-side)
+    (kbd "<leader>e") #'sov-dirvish-side-toggle)
   (evil-define-key 'normal dirvish-mode-map
     (kbd "h") #'dired-up-directory
     (kbd "l") #'sov-dirvish-side-toggle-or-open
     (kbd "RET") #'sov-dirvish-side-toggle-or-open
-    (kbd "SPC e") #'dirvish-side))
+    (kbd "SPC e") #'sov-dirvish-side-toggle))
 
 (provide 'sov-editor)
