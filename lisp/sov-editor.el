@@ -5,5 +5,11 @@
   :init
   (which-key-mode 1))
 
+(use-package dirvish
+  :ensure (:host github
+           :repo "alexluigit/dirvish"
+           :wait t)
+  :init
+  (dirvish-override-dired-mode))
 
 (provide 'sov-editor)
