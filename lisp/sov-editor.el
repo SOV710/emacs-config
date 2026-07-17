@@ -5,6 +5,31 @@
   :init
   (which-key-mode 1))
 
+;; Visualize and navigate the undo tree.
+(use-package vundo
+  :ensure (:host github
+           :repo "casouri/vundo"
+           :wait t)
+  :commands (vundo vundo-mode)
+  :init
+  ;; Register the leader entry before vundo is loaded; the command itself is
+  ;; autoloaded on demand by `use-package'.
+  (evil-define-key '(normal visual motion) 'global
+    (kbd "<leader>us") #'vundo)
+  :config
+  ;; Keep vundo's tree navigation close to Evil/Vim's hjkl convention.  The
+  ;; original f/b bindings remain available as aliases for forward/backward.
+  ;; Use Evil's state-aware definition so normal-state motion bindings do not
+  ;; shadow the vundo local map (notably `j`/`k`).
+  (evil-define-key 'normal vundo-mode-map
+    (kbd "h") #'vundo-backward
+    (kbd "l") #'vundo-forward
+    (kbd "j") #'vundo-next
+    (kbd "k") #'vundo-previous
+    (kbd "G") #'vundo-goto-last-saved
+    (kbd "n") #'vundo-goto-next-saved
+    (kbd "r") #'vundo-stem-root))
+
 ;; Surround editing
 ;; Evil-surround provides operator-style add/delete/change operations.  Keep
 ;; the custom prefix under `ga` so normal-state `gaa` composes naturally with
