@@ -13,6 +13,18 @@
         "-l --almost-all --human-readable --group-directories-first --no-group")
   (put 'dired-find-alternate-file 'disabled nil))
 
+(defun sov-dirvish-side-toggle-or-open ()
+  "Expand directories in Dirvish Side, otherwise open the current entry."
+  (interactive)
+  (let ((session (dirvish-curr))
+        (file (dired-get-filename nil t)))
+    (if (and session
+             (eq (dv-type session) 'side)
+             file
+             (file-directory-p file))
+        (dirvish-subtree-toggle)
+      (dired-find-file))))
+
 (use-package dirvish
   :ensure (:host github
            :repo "alexluigit/dirvish"
@@ -35,7 +47,8 @@
     (kbd "<leader>e") #'dirvish-side)
   (evil-define-key 'normal dirvish-mode-map
     (kbd "h") #'dired-up-directory
-    (kbd "l") #'dired-find-file
+    (kbd "l") #'sov-dirvish-side-toggle-or-open
+    (kbd "RET") #'sov-dirvish-side-toggle-or-open
     (kbd "SPC e") #'dirvish-side))
 
 (provide 'sov-editor)
