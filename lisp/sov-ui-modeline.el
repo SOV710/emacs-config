@@ -147,9 +147,6 @@
                   "P" 'sov-ui-mode-line-condition)
                  "Proc")))))
 
-(use-package nerd-icons
-  :ensure t)
-
 (defvar-local sov-ui--diff-hunks '(0 0 0))
 
 (defun sov-ui--cache-diff-hunks (changes)

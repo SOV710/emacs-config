@@ -8,6 +8,9 @@
   :config
   (load-theme 'tokyo-night t))
 
+(use-package nerd-icons
+  :ensure t)
+
 (require 'sov-ui-dashboard)
 (require 'sov-ui-modeline)
 
