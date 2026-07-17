@@ -26,6 +26,9 @@
   :ensure (:host github
            :repo "minad/vertico"
            :wait t)
+  :bind (:map vertico-map
+              ("C-j" . vertico-next)
+              ("C-k" . vertico-previous))
   :init
   (vertico-mode 1)
   :custom
