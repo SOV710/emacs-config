@@ -85,9 +85,7 @@
 
 
 ;; completion and minibuffer
-(setq completion-styles '(basic substring partial-completion) ; search matching algorithm order
-      completion-category-defaults nil ; all categories use your completion-styles directly
-      completion-cycle-threshold 3 ; cycle when there are no more than 3 candidates
+(setq completion-cycle-threshold 3 ; cycle when there are no more than 3 candidates
       completion-ignore-case t ; completion ignores case
       read-buffer-completion-ignore-case t ; reading buffer names ignores case
       read-file-name-completion-ignore-case t ; file name completion ignores case

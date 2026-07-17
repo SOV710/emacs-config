@@ -5,6 +5,83 @@
   :init
   (which-key-mode 1))
 
+;; minibuffer completion and search
+(use-package project
+  :ensure nil)
+
+;; Match space-separated components independently in completion candidates.
+(use-package orderless
+  :ensure (:host github
+           :repo "oantolin/orderless"
+           :wait t)
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  ;; Keep native path-component completion for literal file paths.
+  (completion-category-overrides
+   '((file (styles partial-completion)))))
+
+;; Render the completion candidate list in the minibuffer.
+(use-package vertico
+  :ensure (:host github
+           :repo "minad/vertico"
+           :wait t)
+  :init
+  (vertico-mode 1)
+  :custom
+  (vertico-cycle t)
+  (vertico-count 15))
+
+;; Add contextual annotations such as mode, path, size, and documentation.
+(use-package marginalia
+  :ensure (:host github
+           :repo "minad/marginalia"
+           :wait t)
+  :init
+  (marginalia-mode 1))
+
+;; Provide searchable buffer, project, navigation, and history commands with preview.
+(use-package consult
+  :ensure (:host github
+           :repo "minad/consult"
+           :wait t)
+  :after project
+  :bind (([remap switch-to-buffer] . consult-buffer)
+         ([remap project-switch-to-buffer] . consult-project-buffer)
+         ([remap goto-line] . consult-goto-line)
+         ([remap imenu] . consult-imenu)
+         ("M-p" . consult-yank-pop))
+  :init
+  (evil-define-key '(normal visual motion) 'global
+    (kbd "<leader>sb") #'consult-project-buffer
+    (kbd "<leader>sf") #'consult-fd
+    (kbd "<leader>sg") #'consult-ripgrep)
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format
+        xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+  (advice-add #'register-preview :override #'consult-register-window))
+
+;; Offer context-sensitive actions for the current candidate or point target.
+(use-package embark
+  :ensure (:host github
+           :repo "oantolin/embark"
+           :wait t)
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings))
+  :init
+  (setq prefix-help-command #'embark-prefix-help-command))
+
+;; Preserve Consult previews in exported or collected Embark candidate buffers.
+(use-package embark-consult
+  :ensure (:host github
+           :repo "oantolin/embark"
+           :files ("embark-consult.el")
+           :wait t)
+  :after (embark consult)
+  :hook (embark-collect-mode . consult-preview-at-point-mode))
+
 ;; file tree
 (use-package dired
   :ensure nil
