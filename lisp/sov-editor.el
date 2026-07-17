@@ -10,6 +10,20 @@
 ;; the custom prefix under `ga` so normal-state `gaa` composes naturally with
 ;; motions, e.g. `gaaiw` followed by a double-quote; visual state uses the
 ;; selected region directly.
+(defvar sov-evil-surround-normal-prefix-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "a") #'evil-surround-edit)
+    (define-key map (kbd "d") #'evil-surround-delete)
+    (define-key map (kbd "r") #'evil-surround-change)
+    map)
+  "Normal-state prefix map for surround editing commands.")
+
+(defvar sov-evil-surround-visual-prefix-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "a") #'evil-surround-region)
+    map)
+  "Visual-state prefix map for surround editing commands.")
+
 (use-package evil-surround
   :ensure (:host github
            :repo "emacs-evil/evil-surround"
@@ -17,12 +31,12 @@
   :after evil
   :config
   (global-evil-surround-mode 1)
-  (evil-define-key 'normal evil-surround-mode-map
-    (kbd "gaa") #'evil-surround-edit
-    (kbd "gad") #'evil-surround-delete
-    (kbd "gar") #'evil-surround-change)
-  (evil-define-key 'visual evil-surround-mode-map
-    (kbd "gaa") #'evil-surround-region))
+  ;; Evil normally assigns `ga` to `what-cursor-position`; `C-x =` remains
+  ;; available for that command after replacing `ga` with this prefix.
+  (evil-global-set-key 'normal (kbd "ga")
+                       sov-evil-surround-normal-prefix-map)
+  (evil-global-set-key 'visual (kbd "ga")
+                       sov-evil-surround-visual-prefix-map))
 
 ;; minibuffer completion and search
 (use-package project
