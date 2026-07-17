@@ -64,6 +64,31 @@
 (use-package flash
   :ensure (:host github
            :repo "Prgebish/flash"
-           :wait t))
+           :wait t)
+  :after evil
+  :custom
+  (flash-labels "asdfghjklqwertyuiopzxcvbnm")
+  (flash-label-uppercase t)
+  (flash-multi-char-labels nil)
+  (flash-multi-window t)
+  (flash-autojump nil)
+  (flash-backdrop nil)
+  (flash-rainbow t)
+  (flash-rainbow-shade 2)
+  (flash-highlight-matches t)
+  (flash-label-position 'after)
+  (flash-char-jump-labels t)
+  (flash-char-multi-line t)
+  (flash-char-reserved-labels "hjkliardcHJKLIARDC;,")
+  (flash-nohlsearch t)
+  (flash-search-history nil)
+  :config
+  (require 'flash-evil)
+  (flash-evil-setup t)
+  (evil-global-set-key 'normal (kbd "s") #'flash-evil-jump)
+  (evil-global-set-key 'visual (kbd "s") #'flash-evil-jump)
+  (evil-global-set-key 'motion (kbd "s") #'flash-evil-jump)
+  (evil-global-set-key 'operator (kbd "s") #'flash-evil-jump)
+  (evil-set-leader '(normal visual motion) (kbd ",") t))
 
 (provide 'sov-editor)
