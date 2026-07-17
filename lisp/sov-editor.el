@@ -13,6 +13,7 @@
 (defvar sov-evil-surround-normal-prefix-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "a") #'evil-surround-edit)
+    (define-key map (kbd "A") #'evil-Surround-edit)
     (define-key map (kbd "d") #'evil-surround-delete)
     (define-key map (kbd "r") #'evil-surround-change)
     map)
@@ -21,6 +22,7 @@
 (defvar sov-evil-surround-visual-prefix-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "a") #'evil-surround-region)
+    (define-key map (kbd "A") #'evil-Surround-region)
     map)
   "Visual-state prefix map for surround editing commands.")
 
