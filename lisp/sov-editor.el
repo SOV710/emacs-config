@@ -10,6 +10,10 @@
            :repo "alexluigit/dirvish"
            :wait t)
   :init
-  (dirvish-override-dired-mode))
+  (dirvish-override-dired-mode)
+  :config
+  (evil-define-key 'normal dirvish-mode-map
+    (kbd "h") #'dired-up-directory
+    (kbd "l") #'dired-find-file))
 
 (provide 'sov-editor)
