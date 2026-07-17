@@ -17,9 +17,36 @@
 ;; Reuse the modeline state color for the current line.  The remap is
 ;; buffer-local, so different buffers can safely be in different Evil states.
 (require 'face-remap)
+(require 'color)
+
+(defcustom sov-ui-hl-line-state-color-strength 0.16
+  "Strength of the modeline state color mixed into the current line.
+A value of 0 uses the normal buffer background; 1 uses the full modeline
+state color."
+  :type 'float
+  :group 'faces)
 
 (defvar-local sov-ui--hl-line-state-remap nil
   "Face-remap cookie for the current buffer's state-colored `hl-line'.")
+
+(defun sov-ui--blend-hl-line-state-color (state-color)
+  "Blend STATE-COLOR into the default buffer background."
+  (let* ((background (sov-ui--face-color
+                      'default :background "#000000"))
+         (state-rgb (color-name-to-rgb state-color))
+         (background-rgb (color-name-to-rgb background))
+         (strength (max 0.0 (min 1.0
+                                 sov-ui-hl-line-state-color-strength))))
+    (if (and state-rgb background-rgb)
+        (apply #'color-rgb-to-hex
+               (append
+                (cl-mapcar
+                 (lambda (state base)
+                   (+ (* strength state)
+                      (* (- 1.0 strength) base)))
+                 state-rgb background-rgb)
+                '(2)))
+      background)))
 
 (defun sov-ui--refresh-hl-line-state (&optional state)
   "Refresh the current line color for Evil STATE in the current buffer."
@@ -28,12 +55,14 @@
   (setq sov-ui--hl-line-state-remap
         (face-remap-add-relative
          'hl-line
-         `(:background
-           ,(sov-ui--face-background
-             (cadr (sov-ui--evil-info
-                    (or state (and (boundp 'evil-state) evil-state)
-                        'emacs)
-                    t))))))
+         `(:foreground unspecified
+           :background
+           ,(sov-ui--blend-hl-line-state-color
+             (sov-ui--face-background
+              (cadr (sov-ui--evil-info
+                     (or state (and (boundp 'evil-state) evil-state)
+                         'emacs)
+                     t)))))))
   (when (bound-and-true-p hl-line-mode)
     (force-mode-line-update)))
 
