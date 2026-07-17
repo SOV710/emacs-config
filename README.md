@@ -15,3 +15,8 @@
 
 > [!WARNING]
 > WIP
+
+## Dependencies
+
+- [`fd`](https://github.com/sharkdp/fd)
+- [`ripgrep`](https://github.com/BurntSushi/ripgrep)
