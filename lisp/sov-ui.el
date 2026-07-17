@@ -31,6 +31,54 @@
   (indent-bars-display-on-blank-lines t)
   (indent-bars-treesit-support t))
 
+;; Preview color literals in programming and markup buffers, without making
+;; the color indicators interactive.
+(use-package colorful-mode
+  :ensure (:host github
+           :repo "DevelopmentCool2449/colorful-mode"
+           :wait t)
+  :custom
+  (colorful-allow-mouse-clicks nil)
+  (colorful-use-prefix nil)
+  :hook ((prog-mode . colorful-mode)
+         (org-mode . colorful-mode)
+         (markdown-mode . colorful-mode)
+         (markdown-ts-mode . colorful-mode)
+         (tex-mode . colorful-mode)
+         (latex-mode . colorful-mode)
+         (typst-mode . colorful-mode)
+         (typst-ts-mode . colorful-mode)
+         (html-mode . colorful-mode)
+         (mhtml-mode . colorful-mode)
+         (css-mode . colorful-mode)
+         (scss-mode . colorful-mode)
+         (web-mode . colorful-mode)))
+
+;; Pulse the destination line after jumps, including Flash and Consult jumps.
+(use-package pulsar
+  :ensure (:host github
+           :repo "protesilaos/pulsar"
+           :wait t)
+  :custom
+  (pulsar-pulse-on-window-change nil)
+  :config
+  (dolist (function '(flash-evil-jump
+                      flash-action
+                      flash-char-find
+                      flash-char-find-to
+                      flash-char-find-backward
+                      flash-char-find-to-backward))
+    (add-to-list 'pulsar-pulse-functions function))
+  (pulsar-global-mode 1)
+  ;; Flash exposes a dedicated hook for jumps that land in another buffer or
+  ;; window; defer registration until Flash itself is loaded.
+  (with-eval-after-load 'flash
+    (add-hook 'flash-after-jump-hook #'pulsar-pulse-line))
+  ;; Consult runs this hook after selecting a candidate and moving point.
+  (with-eval-after-load 'consult
+    (add-hook 'consult-after-jump-hook #'pulsar-pulse-line)
+    (add-hook 'consult-after-jump-hook #'pulsar-reveal-entry)))
+
 
 (provide 'sov-ui)
 ;;; sov-ui.el ends here
