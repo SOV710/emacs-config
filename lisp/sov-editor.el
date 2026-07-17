@@ -20,12 +20,16 @@
   :init
   (dirvish-override-dired-mode)
   :custom
-  (dirvish-side-width 24)
+  (dirvish-side-width 32)
   (dirvish-side-auto-expand t)
   (dirvish-side-window-parameters
    '((no-delete-other-windows . t)))
   :config
   (require 'dirvish-side)
+  (setq dirvish-attributes           ; The order *MATTERS* for some attributes
+      '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
+      dirvish-side-attributes
+      '(vc-state nerd-icons collapse file-size))
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>o") #'dirvish-dwim
     (kbd "<leader>e") #'dirvish-side)
