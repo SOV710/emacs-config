@@ -19,11 +19,17 @@
            :wait t)
   :init
   (dirvish-override-dired-mode)
+  :custom
+  (dirvish-side-width 24)
+  (dirvish-side-auto-expand t)
   :config
+  (require 'dirvish-side)
   (evil-define-key '(normal visual motion) 'global
-    (kbd "<leader>o") #'dirvish-dwim)
+    (kbd "<leader>o") #'dirvish-dwim
+    (kbd "<leader>e") #'dirvish-side)
   (evil-define-key 'normal dirvish-mode-map
     (kbd "h") #'dired-up-directory
-    (kbd "l") #'dired-find-file))
+    (kbd "l") #'dired-find-file
+    (kbd "SPC e") #'dirvish-side))
 
 (provide 'sov-editor)
