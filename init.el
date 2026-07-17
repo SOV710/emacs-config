@@ -107,6 +107,7 @@
 
 (require 'sov-core)
 (require 'sov-evil)
+(require 'sov-keymaps)
 (require 'sov-ui)
 (sov-apply-font)
 (add-hook 'after-make-frame-functions #'sov-apply-font)
