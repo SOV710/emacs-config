@@ -22,6 +22,8 @@
   :custom
   (dirvish-side-width 24)
   (dirvish-side-auto-expand t)
+  (dirvish-side-window-parameters
+   '((no-delete-other-windows . t)))
   :config
   (require 'dirvish-side)
   (evil-define-key '(normal visual motion) 'global
