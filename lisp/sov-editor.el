@@ -57,7 +57,7 @@
   :init
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>sb") #'consult-project-buffer
-    (kbd "<leader>sf") #'consult-fd
+    (kbd "<leader>sf") #'project-find-file
     (kbd "<leader>sg") #'consult-ripgrep)
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format
