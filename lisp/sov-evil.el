@@ -11,5 +11,13 @@
   :config
   (evil-mode 1))
 
+(use-package evil-collection
+  :after evil
+  :ensure (:host github
+           :repo "emacs-evil/evil-collection"
+           :wait t)
+  :config
+  (evil-collection-init))
+
 
 (provide 'sov-evil)
