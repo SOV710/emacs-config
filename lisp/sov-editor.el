@@ -20,6 +20,8 @@
   :init
   (dirvish-override-dired-mode)
   :config
+  (evil-define-key '(normal visual motion) 'global
+    (kbd "<leader>o") #'dirvish-dwim)
   (evil-define-key 'normal dirvish-mode-map
     (kbd "h") #'dired-up-directory
     (kbd "l") #'dired-find-file))
