@@ -1,4 +1,4 @@
-;;; sov-editor.el --- Evil configuration -*- lexical-binding: t; -*-
+;;; sov-evil.el --- Evil configuration -*- lexical-binding: t; -*-
 
 ;; evil config
 (use-package evil
