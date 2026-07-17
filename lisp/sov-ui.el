@@ -14,6 +14,42 @@
 (require 'sov-ui-dashboard)
 (require 'sov-ui-modeline)
 
+;; Reuse the modeline state color for the current line.  The remap is
+;; buffer-local, so different buffers can safely be in different Evil states.
+(require 'face-remap)
+
+(defvar-local sov-ui--hl-line-state-remap nil
+  "Face-remap cookie for the current buffer's state-colored `hl-line'.")
+
+(defun sov-ui--refresh-hl-line-state (&optional state)
+  "Refresh the current line color for Evil STATE in the current buffer."
+  (when sov-ui--hl-line-state-remap
+    (face-remap-remove-relative sov-ui--hl-line-state-remap))
+  (setq sov-ui--hl-line-state-remap
+        (face-remap-add-relative
+         'hl-line
+         `(:background
+           ,(sov-ui--face-background
+             (cadr (sov-ui--evil-info
+                    (or state (and (boundp 'evil-state) evil-state)
+                        'emacs)
+                    t))))))
+  (when (bound-and-true-p hl-line-mode)
+    (force-mode-line-update)))
+
+;; Evil's state entry hooks run after each transition, including operator and
+;; temporary visual states.  Apply the initial color to buffers created later.
+(dolist (hook '(evil-normal-state-entry-hook
+                evil-motion-state-entry-hook
+                evil-insert-state-entry-hook
+                evil-visual-state-entry-hook
+                evil-replace-state-entry-hook
+                evil-operator-state-entry-hook
+                evil-emacs-state-entry-hook))
+  (add-hook hook #'sov-ui--refresh-hl-line-state))
+(add-hook 'after-change-major-mode-hook #'sov-ui--refresh-hl-line-state)
+(sov-ui--refresh-hl-line-state)
+
 (use-package indent-bars
   :ensure (:host github
            :repo "jdtsmith/indent-bars"
