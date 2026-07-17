@@ -22,6 +22,15 @@
   (kbd "C-'") #'bookmark-jump
   (kbd "'") #'list-bookmarks)
 
+;; selection
+(defun sov-evil-select-whole-buffer ()
+  "Select the accessible buffer in Evil visual-line state."
+  (interactive)
+  (evil-visual-select (point-min) (point-max) 'line))
+
+(evil-define-key 'normal 'global
+  (kbd "C-a") #'sov-evil-select-whole-buffer)
+
 ;; paste
 ;; Use the native yank command so the binding follows Emacs' kill-ring rules.
 (global-set-key (kbd "C-S-v") #'yank)
