@@ -1,4 +1,4 @@
-;;; sov-editor.el --- Editor Flow configuration -*- lexical-binding: t; -*-
+;;; sov-editor.el --- Evil configuration -*- lexical-binding: t; -*-
 
 ;; evil config
 (use-package evil
