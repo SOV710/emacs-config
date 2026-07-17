@@ -5,6 +5,23 @@
   :init
   (which-key-mode 1))
 
+;; Colorize nested delimiters only in Lisp-family buffers.
+(use-package rainbow-delimiters
+  :ensure (:host github
+           :repo "Fanael/rainbow-delimiters"
+           :wait t)
+  :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
+         (lisp-interaction-mode . rainbow-delimiters-mode)
+         (lisp-mode . rainbow-delimiters-mode)
+         (common-lisp-mode . rainbow-delimiters-mode)
+         (scheme-mode . rainbow-delimiters-mode)
+         (clojure-mode . rainbow-delimiters-mode)
+         (clojurec-mode . rainbow-delimiters-mode)
+         (clojurescript-mode . rainbow-delimiters-mode)
+         (racket-mode . rainbow-delimiters-mode)
+         (hy-mode . rainbow-delimiters-mode)
+         (fennel-mode . rainbow-delimiters-mode)))
+
 ;; Visualize and navigate the undo tree.
 (use-package vundo
   :ensure (:host github
