@@ -110,3 +110,5 @@
 (require 'sov-ui)
 (sov-apply-font)
 (add-hook 'after-make-frame-functions #'sov-apply-font)
+
+(require 'sov-editor)
