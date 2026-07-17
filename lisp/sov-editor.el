@@ -5,6 +5,25 @@
   :init
   (which-key-mode 1))
 
+;; Surround editing
+;; Evil-surround provides operator-style add/delete/change operations.  Keep
+;; the custom prefix under `ga` so normal-state `gaa` composes naturally with
+;; motions, e.g. `gaaiw` followed by a double-quote; visual state uses the
+;; selected region directly.
+(use-package evil-surround
+  :ensure (:host github
+           :repo "emacs-evil/evil-surround"
+           :wait t)
+  :after evil
+  :config
+  (global-evil-surround-mode 1)
+  (evil-define-key 'normal evil-surround-mode-map
+    (kbd "gaa") #'evil-surround-edit
+    (kbd "gad") #'evil-surround-delete
+    (kbd "gar") #'evil-surround-change)
+  (evil-define-key 'visual evil-surround-mode-map
+    (kbd "gaa") #'evil-surround-region))
+
 ;; minibuffer completion and search
 (use-package project
   :ensure nil)
