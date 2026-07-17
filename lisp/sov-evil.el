@@ -2,7 +2,9 @@
 
 ;; evil config
 (use-package evil
-  :ensure t
+  :ensure (:host github
+           :repo "emacs-evil/evil"
+           :wait t)
   :init
   (setq evil-want-integration t
         evil-want-keybinding nil
