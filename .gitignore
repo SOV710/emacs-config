@@ -22,6 +22,7 @@
 # Common state files
 /bookmarks
 /project-list
+/projects
 /network-security.data
 /tramp
 /url/
