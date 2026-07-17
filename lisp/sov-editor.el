@@ -60,4 +60,10 @@
     (kbd "RET") #'sov-dirvish-side-toggle-or-open
     (kbd "SPC e") #'sov-dirvish-side-toggle))
 
+;; smarter navigate/search motion
+(use-package flash
+  :ensure (:host github
+           :repo "Prgebish/flash"
+           :wait t))
+
 (provide 'sov-editor)
