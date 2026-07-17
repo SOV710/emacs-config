@@ -11,7 +11,9 @@
         evil-undo-system 'undo-redo
         evil-respect-visual-line-mode t)
   :config
-  (evil-mode 1))
+  (evil-mode 1)
+  (evil-set-leader '(normal visual motion) (kbd "SPC"))
+  (evil-set-leader '(normal visual motion) (kbd ",") t))
 
 (use-package evil-collection
   :after evil

@@ -5,6 +5,7 @@
   :init
   (which-key-mode 1))
 
+;; file tree
 (use-package dirvish
   :ensure (:host github
            :repo "alexluigit/dirvish"
