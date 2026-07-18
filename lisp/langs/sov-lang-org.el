@@ -7,6 +7,9 @@
 ;; Org already has its own structural parser; Emacs 30 does not provide an
 ;; `org-ts-mode', so registering an unused Tree-sitter grammar adds no value.
 (setq org-startup-indented t
+      ;; Apply <N> width cookies when opening a file.  `C-c TAB' still
+      ;; toggles the current column between its shrunk and expanded forms.
+      org-startup-shrink-all-tables t
       org-hide-emphasis-markers t
       org-pretty-entities t
       org-ellipsis " ..."
@@ -28,6 +31,15 @@
 (add-hook 'org-mode-hook #'org-indent-mode)
 (add-hook 'org-mode-hook #'visual-line-mode)
 
+;; Align table columns by rendered pixel width without changing their text.
+;; This matters for CJK, Nerd Fonts, images, and mixed-width glyphs.
+(use-package valign
+  :ensure (:host github
+           :repo "casouri/valign"
+           :wait t)
+  :hook (org-mode . valign-mode)
+  :custom
+  (valign-fancy-bar nil))
 
 (provide 'sov-lang-org)
 ;;; sov-lang-org.el ends here

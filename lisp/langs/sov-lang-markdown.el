@@ -52,6 +52,14 @@
   :hook ((markdown-ts-mode . visual-line-mode)
          (markdown-ts-mode . turn-on-auto-fill)))
 
+;; `valign' is installed by the Org language module and shared here.  It only
+;; adds display properties; Markdown table source and semantics stay intact.
+(use-package valign
+  :ensure nil
+  :hook ((markdown-mode . valign-mode)
+         (gfm-mode . valign-mode)
+         (markdown-ts-mode . valign-mode)))
+
 ;; Register Markdown Tree-sitter grammars when the built-in `treesit' package
 ;; is available.  Install them interactively with `treesit-install-language-grammar'.
 (when (require 'treesit nil t)
