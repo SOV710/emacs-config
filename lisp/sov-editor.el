@@ -224,6 +224,29 @@ subtree; otherwise visit the file or directory at point normally."
           (dirvish-quit))
       (dirvish-side))))
 
+(defun sov-dirvish-side-create-kind (name)
+  "Classify NAME as a file, directory, or empty input."
+  (cond ((string= name "") nil)
+        ((string-suffix-p "/" name) 'directory)
+        (t 'file)))
+
+(defun sov-dirvish-side-create-entry ()
+  "Create a file or directory in the current Dirvish Side directory."
+  (interactive)
+  (let ((session (dirvish-curr)))
+    (unless (and session (eq (dv-type session) 'side))
+      (user-error "This command is only available in Dirvish Side")))
+  (let* ((name (read-string "Create file/directory: "))
+         (kind (sov-dirvish-side-create-kind name)))
+    (when kind
+      (require 'dired-aux)
+      (let ((path (expand-file-name (directory-file-name name)
+                                    default-directory)))
+        (if (eq kind 'directory)
+            (dired-create-directory path)
+          (dired-create-empty-file path))
+        (revert-buffer nil t)))))
+
 (use-package dirvish
   :ensure (:host github
            :repo "alexluigit/dirvish"
@@ -248,6 +271,7 @@ subtree; otherwise visit the file or directory at point normally."
     (kbd "<leader>o") #'dirvish-dwim
     (kbd "<leader>e") #'sov-dirvish-side-toggle)
   (evil-define-key 'normal dirvish-mode-map
+    (kbd "a") #'sov-dirvish-side-create-entry
     (kbd "h") #'dired-up-directory
     (kbd "l") #'sov-dirvish-side-toggle-or-open
     (kbd "RET") #'sov-dirvish-side-toggle-or-open
