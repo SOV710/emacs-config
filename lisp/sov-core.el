@@ -1,141 +1,203 @@
 ;;; sov-core.el --- Core Emacs behavior -*- lexical-binding: t; -*-
 
-;; startup and performance
-(setq gc-cons-threshold (* 64 1024 1024) ; set bytes allowed to allocate before triggering GC
-      gc-cons-percentage 0.2 ; set relative heap growth allowed before GC
-      read-process-output-max (* 1024 1024) ; limit max bytes Emacs reads from a subprocess at once; higher reduces fragmentation of large messages but increases transient allocation
-      process-adaptive-read-buffering nil ; when disabled, Emacs usually handles arrived process output more promptly
-      inhibit-startup-screen t ; skip the Emacs startup screen and show the initial buffer directly
-      initial-scratch-message nil ; disable initial text in the *scratch* buffer
-      )
+;; This module holds the baseline Emacs settings that affect startup,
+;; performance, persistence, display, editing, search, completion, windows,
+;; backups, diagnostics, and project support.  Most settings here do not
+;; depend on any third-party package.
 
-;; customize
-(setq custom-file (locate-user-emacs-file "custom.el")) ; by default, Customize may write directly into your init.el; isolate such auto-generated code
+
+;;; Startup and performance
+
+;; Raise the garbage-collection threshold during normal use.  The default is
+;; very low, which causes frequent GC and can make long editing sessions feel
+;; sluggish.  The percentage is kept conservative so GC still runs when the
+;; heap grows meaningfully.
+(setq gc-cons-threshold (* 64 1024 1024)
+      gc-cons-percentage 0.2
+      ;; Increase the maximum amount of output read from external processes in
+      ;; a single batch.  This reduces fragmentation for large language-server
+      ;; messages at the cost of slightly higher transient memory use.
+      read-process-output-max (* 1024 1024)
+      ;; Disable adaptive buffering so process output is handled as soon as it
+      ;; arrives, which usually improves responsiveness for LSP and terminal
+      ;; integrations.
+      process-adaptive-read-buffering nil
+      ;; Skip the startup splash screen and the default scratch-buffer text.
+      inhibit-startup-screen t
+      initial-scratch-message nil)
+
+
+;;; Customization file isolation
+
+;; Redirect customizations written by `customize' to a separate file so that
+;; auto-generated settings never clutter the version-controlled init files.
+;; If the file does not exist yet, `load' silently skips it.
+(setq custom-file (locate-user-emacs-file "custom.el"))
 (load custom-file 'noerror)
 
 
-;; file, persistence and history
-(setq recentf-max-saved-items 200 ; limit number of recent files persisted by recentf
-      history-length 1000 ; set maximum length kept for most minibuffer histories
-      history-delete-duplicates t ; delete old duplicates when adding new history entries
-      auto-revert-verbose nil ; suppress auto-revert-mode reload messages
-      delete-by-moving-to-trash t ; make delete-file commands move to system trash first
-      )
+;;; Files, persistence, and history
 
-(recentf-mode 1) ; keep a list of recently visited files and persist it
-(savehist-mode 1) ; save minibuffer history and specified variables across sessions
-(save-place-mode 1) ; roughly restore cursor position like ShaDa
-(global-auto-revert-mode 1) ; auto-reload the latest file content from disk when changed externally, without manual confirmation
+;; Keep the recent-files, minibuffer histories, and cursor positions across
+;; sessions.  `global-auto-revert-mode' makes Emacs notice external changes
+;; to files on disk without prompting.
+(setq recentf-max-saved-items 200
+      history-length 1000
+      history-delete-duplicates t
+      auto-revert-verbose nil
+      delete-by-moving-to-trash t)
+
+(recentf-mode 1)
+(savehist-mode 1)
+(save-place-mode 1)
+(global-auto-revert-mode 1)
 
 
-;; display and interface
-(setq-default display-line-numbers-type 'relative ; relative line numbers
-              cursor-type 'bar ; cursor shape
-              ring-bell-function #'ignore ; disable audible bell
-              )
+;;; Display and interface chrome
 
-(menu-bar-mode -1) ; hide the top GUI menu bar
-(tool-bar-mode -1) ; hide the top GUI tool bar
-(scroll-bar-mode -1) ; hide the left graphical scroll bar
-(global-display-line-numbers-mode t) ; enable line numbers globally
-(global-hl-line-mode 1) ; highlight current visual line globally
-(column-number-mode 1) ; show column number in mode-line
-(show-paren-mode 1) ; enable paren matching highlight
-(blink-cursor-mode -1) ; disable cursor blinking globally
+;; Use relative line numbers, a bar cursor, and disable the audible bell.  The
+;; menu bar, tool bar, and scroll bar are hidden for a cleaner look.
+(setq-default display-line-numbers-type 'relative
+              cursor-type 'bar
+              ring-bell-function #'ignore)
 
-;; soft wraping
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(global-display-line-numbers-mode t)
+(global-hl-line-mode 1)
+(column-number-mode 1)
+(show-paren-mode 1)
+(blink-cursor-mode -1)
+
+
+;;; Soft wrapping and CJK line breaking
+
+;; `kinsoku' improves line wrapping for East Asian scripts by avoiding certain
+;; characters at the beginning or end of a line.  `visual-wrap' provides the
+;; `visual-wrap-prefix-mode' used below.
 (require 'kinsoku)
-(setq-default truncate-lines nil ; soft wrap; refuse forced truncation
-              word-wrap t ; soft wrap breaks at word boundaries, not window edges
-              word-wrap-by-category t ; improve CJK word soft-wrapping experience
-              )
+(setq-default truncate-lines nil
+              word-wrap t
+              word-wrap-by-category t)
 
 (require 'visual-wrap)
-(setq visual-wrap-extra-indent 0) ; do not add extra indentation to continuation lines
-(global-visual-line-mode 1) ; use visual lines globally instead of logical lines
-(global-visual-wrap-prefix-mode 1) ; make continuation lines after soft wrap inherit the original logical line indentation
+(setq visual-wrap-extra-indent 0)
+(global-visual-line-mode 1)
+(global-visual-wrap-prefix-mode 1)
 
 
-;; editing indentation and whitespace
+;;; Editing, indentation, and whitespace
+
+;; Indent with spaces, not tabs, and use a default tab width of 4 for files
+;; that still contain tabs.  `fill-column' is set to 100 for prose wrapping
+;; and fill commands.
 (setq-default indent-tabs-mode nil
               tab-width 4
               fill-column 100)
 
-(setq sentence-end-double-space nil ; do not require two spaces after sentence punctuation
-      tab-always-indent 'complete ; tab tries completion first, then indentation
-      kill-ring-max 1000 ; kill ring size
-      require-final-newline t ; auto-add final newline when saving files
-      )
+;; Single space after sentence punctuation is enough; enable tab completion;
+;; enlarge the kill ring; and always end files with a newline.
+(setq sentence-end-double-space nil
+      tab-always-indent 'complete
+      kill-ring-max 1000
+      require-final-newline t)
 
-(electric-pair-mode 1) ; autopair
-(electric-indent-mode 1) ; autoindent
-(delete-selection-mode 1) ; typing replaces the selected region; minimal impact on evil users
-
-
-;; search, replace and navigation
-(setq-default case-fold-search t
-              ); search and match ignore case by default
-
-(setq scroll-margin 5 ; keep 5 lines above and below the cursor
-      scroll-conservatively 101 ; do not auto-recenter after cursor moves past the boundary
-      recenter-positions '(middle top bottom) ; recenter-top-bottom cycle order
-      )
-
-(repeat-mode 1) ; let commands supporting repeat-map be repeated with short keys
+(electric-pair-mode 1)
+(electric-indent-mode 1)
+(delete-selection-mode 1)
 
 
-;; completion and minibuffer
-(setq completion-cycle-threshold 3 ; cycle when there are no more than 3 candidates
-      completion-ignore-case t ; completion ignores case
-      read-buffer-completion-ignore-case t ; reading buffer names ignores case
-      read-file-name-completion-ignore-case t ; file name completion ignores case
-      minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt) ; minibuffer properties
-      )
+;;; Search, replace, and navigation
+
+;; Case-insensitive search by default, keep some context above and below the
+;; cursor, and avoid aggressive recentering when scrolling long distances.
+(setq-default case-fold-search t)
+
+(setq scroll-margin 5
+      scroll-conservatively 101
+      recenter-positions '(middle top bottom))
+
+;; `repeat-mode' allows commands that define a repeat map to be re-executed by
+;; pressing a single key without repeating the full key sequence.
+(repeat-mode 1)
 
 
-;; windows, frames and buffers
+;;; Completion and minibuffer
+
+;; Cycle completion candidates when there are at most 3, and ignore case in
+;; completion, file names, and buffer names.  The prompt properties make the
+;; prompt read-only and keep the cursor from moving into it.
+(setq completion-cycle-threshold 3
+      completion-ignore-case t
+      read-buffer-completion-ignore-case t
+      read-file-name-completion-ignore-case t
+      minibuffer-prompt-properties '(read-only t
+                                      cursor-intangible t
+                                      face minibuffer-prompt))
+
+
+;;; Windows, frames, and buffers
+
+;; `uniquify' is required for `uniquify-buffer-name-style'.  Windows are
+;; resized as a combination, frames are resized pixel-by-pixel, and dialog
+;; boxes are avoided in favor of the minibuffer.
 (require 'uniquify)
-(setq window-combination-resize t ; when resizing one window, redistribute other windows in the same combination as a whole
-      frame-resize-pixelwise t ; resize frame pixel-wise
-      use-dialog-box nil ; never use graphical dialog boxes
-      use-file-dialog nil ; forbid using system file selection dialogs
-      use-short-answers t ; allow y/n short answers for yes-or-no questions
-      uniquify-buffer-name-style 'forward ; when opening files with the same name, Emacs prefixes the path to distinguish them
-      )
+(setq window-combination-resize t
+      frame-resize-pixelwise t
+      use-dialog-box nil
+      use-file-dialog nil
+      use-short-answers t
+      uniquify-buffer-name-style 'forward)
 
 
-;; undo backup and auto save
+;;; Undo, backup, and auto-save
+
+;; Keep backup and auto-save files under `user-emacs-directory' so they do
+;; not pollute the working tree.  Numbered backups keep a small history of
+;; saved versions.
 (make-directory (locate-user-emacs-file "backups/") t)
 (make-directory (locate-user-emacs-file "auto-save/") t)
 
-(setq make-backup-files t ; Emacs creates backup files when saving, i.e., *~ files
-      backup-directory-alist `(("." . ,(locate-user-emacs-file "backups/"))) ; put all Emacs backup files under the user-managed backups/
-      backup-by-copying t ; make backups by copying instead of renaming the original file
-      version-control t ; create numbered backups each time to keep historical versions
-      kept-new-versions 6 ; keep 6 newer versions
-      kept-old-versions 2 ; keep 2 older versions
-      delete-old-versions t ; auto-delete old numbered backups when exceeding kept count
-      auto-save-default t ; enable auto-save for ordinary files
-      auto-save-file-name-transforms `((".*" ,(locate-user-emacs-file "auto-save/") t))
-      )
+(setq make-backup-files t
+      backup-directory-alist
+      `(("." . ,(locate-user-emacs-file "backups/")))
+      backup-by-copying t
+      version-control t
+      kept-new-versions 6
+      kept-old-versions 2
+      delete-old-versions t
+      auto-save-default t
+      auto-save-file-name-transforms
+      `((".*" ,(locate-user-emacs-file "auto-save/") t)))
 
 
-;; processes, compilation and diagnostics
-(setq compilation-scroll-output 'first-error ; stop auto-scrolling compilation after the first error
-      comint-prompt-read-only t ; effect: cannot delete or modify prompts like user@host:~$, >>>
-      next-error-recenter '(4) ; show the error line in the center of the window
-      )
+;;; Processes, compilation, and diagnostics
 
-(add-hook 'prog-mode-hook #'flymake-mode) ; enable diagnostics for programming modes
+;; Stop compilation buffers from scrolling once the first error is found; make
+;; comint prompts read-only; and center the error line when jumping to it.
+(setq compilation-scroll-output 'first-error
+      comint-prompt-read-only t
+      next-error-recenter '(4))
 
-
-;; projects languages, and treesit
-(setq project-vc-extra-root-markers '(".project.el")) ; add root directory markers for projects
-(setopt treesit-font-lock-level 4) ; maximum treesitter highlighting
+;; Enable `flymake' in all programming modes for on-the-fly diagnostics.
+(add-hook 'prog-mode-hook #'flymake-mode)
 
 
-;; others
+;;; Projects, languages, and Tree-sitter
+
+;; Treat `.project.el' as a project root marker in addition to version-control
+;; roots.  Use the maximum level of Tree-sitter font-locking when available.
+(setq project-vc-extra-root-markers '(".project.el"))
+(setopt treesit-font-lock-level 4)
+
+
+;;; Safety prompts
+
+;; Ask for explicit confirmation before quitting Emacs.
 (setq confirm-kill-emacs #'yes-or-no-p)
 
 
 (provide 'sov-core)
+
+;;; sov-core.el ends here

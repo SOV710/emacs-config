@@ -1,6 +1,15 @@
 ;;; sov-keymaps.el --- Custom Keymaps Configuration -*- lexical-binding: t; -*-
 
-;; window management
+;; This module holds custom key bindings that are not tied to a specific
+;; package.  Bindings that depend on a particular package are defined inside
+;; that package's `use-package' form instead.
+
+
+;;; Window management
+
+;; The space leader is used for window commands, while the standard Ctrl + h/j/k/l
+;; chord is used for moving between adjacent windows.  Shifted variants resize the
+;; currently selected window.
 (evil-define-key '(normal visual motion) 'global
   (kbd "<leader>wh") #'split-window-below
   (kbd "<leader>wv") #'split-window-right
@@ -14,15 +23,20 @@
   (kbd "C-S-k") #'enlarge-window
   (kbd "C-S-j") #'shrink-window)
 
-;; bookmarks
+
+;;; Bookmarks
+
 ;; Keep bookmark commands in normal state so these single-key bindings do not
-;; interfere with insertion and minibuffer workflows.
+;; interfere with insertion and minibuffer workflows.  `m' sets a bookmark at
+;; point, `'' jumps to a bookmark, and `C-'' opens the bookmark list.
 (evil-define-key '(normal) 'global
   (kbd "m") #'bookmark-set
   (kbd "C-'") #'bookmark-jump
   (kbd "'") #'list-bookmarks)
 
-;; selection
+
+;;; Selection
+
 (defun sov-evil-select-whole-buffer ()
   "Select the accessible buffer in Evil visual-line state."
   (interactive)
@@ -31,9 +45,13 @@
 (evil-define-key 'normal 'global
   (kbd "C-a") #'sov-evil-select-whole-buffer)
 
-;; paste
+
+;;; Paste
+
 ;; Use the native yank command so the binding follows Emacs' kill-ring rules.
 (global-set-key (kbd "C-S-v") #'yank)
 
+
 (provide 'sov-keymaps)
+
 ;;; sov-keymaps.el ends here

@@ -1,6 +1,14 @@
 ;;; sov-ui.el --- UI configuration -*- lexical-binding: t; -*-
 
-;; color scheme
+;; This module configures visual appearance: theme, icons, dashboard, mode
+;; line, current-line color that follows the Evil state, indent guides, color
+;; previews, and jump pulsing.
+
+
+;;; Color scheme and icons
+
+;; The Tokyo Night theme provides a dark, low-contrast palette.  It is loaded
+;; before other UI features so they can inherit its faces.
 (use-package tokyo-night
   :ensure (:host github
            :repo "bbatsov/tokyo-night-emacs"
@@ -8,13 +16,17 @@
   :config
   (load-theme 'tokyo-night t))
 
+;; Nerd icons are used by the mode line, dashboard, and Dirvish.
 (use-package nerd-icons
   :ensure t)
 
 (require 'sov-ui-dashboard)
 (require 'sov-ui-modeline)
 
-;; Reuse the modeline state color for the current line.  The remap is
+
+;;; State-aware current line highlight
+
+;; Reuse the mode-line state color for the current line.  The remap is
 ;; buffer-local, so different buffers can safely be in different Evil states.
 (require 'face-remap)
 (require 'color)
@@ -27,10 +39,13 @@ state color."
   :group 'faces)
 
 (defvar-local sov-ui--hl-line-state-remap nil
-  "Face-remap cookie for the current buffer's state-colored `hl-line'.")
+  "Face-remap cookie for the current buffer's state-colored `hl-line'.
+Holding the cookie allows removing the old remap before applying a new one.")
 
 (defun sov-ui--blend-hl-line-state-color (state-color)
-  "Blend STATE-COLOR into the default buffer background."
+  "Blend STATE-COLOR into the default buffer background.
+The blending ratio is controlled by `sov-ui-hl-line-state-color-strength'.
+Return the resulting color as a hex string."
   (let* ((background (sov-ui--face-color
                       'default :background "#000000"))
          (state-rgb (color-name-to-rgb state-color))
@@ -49,7 +64,9 @@ state color."
       background)))
 
 (defun sov-ui--refresh-hl-line-state (&optional state)
-  "Refresh the current line color for Evil STATE in the current buffer."
+  "Refresh the current line color for Evil STATE in the current buffer.
+If STATE is nil, use the current `evil-state' or fall back to `emacs'.
+This function is intended to be added to Evil state entry hooks."
   (when sov-ui--hl-line-state-remap
     (face-remap-remove-relative sov-ui--hl-line-state-remap))
   (setq sov-ui--hl-line-state-remap
@@ -79,6 +96,11 @@ state color."
 (add-hook 'after-change-major-mode-hook #'sov-ui--refresh-hl-line-state)
 (sov-ui--refresh-hl-line-state)
 
+
+;;; Indent guides
+
+;; Render thin vertical bars for indentation levels.  The color is derived
+;; from the current theme and blended with the background.
 (use-package indent-bars
   :ensure (:host github
            :repo "jdtsmith/indent-bars"
@@ -95,6 +117,9 @@ state color."
   (indent-bars-highlight-current-depth '(:blend 0.5))
   (indent-bars-display-on-blank-lines t)
   (indent-bars-treesit-support t))
+
+
+;;; Color previews
 
 ;; Preview color literals in programming and markup buffers, without making
 ;; the color indicators interactive.
@@ -119,7 +144,11 @@ state color."
          (scss-mode . colorful-mode)
          (web-mode . colorful-mode)))
 
-;; Pulse the destination line after jumps, including Flash and Consult jumps.
+
+;;; Jump pulsing
+
+;; Pulse the destination line after jumps, including Flash and Consult jumps,
+;; so the new cursor position is easy to spot.
 (use-package pulsar
   :ensure (:host github
            :repo "protesilaos/pulsar"
@@ -146,4 +175,5 @@ state color."
 
 
 (provide 'sov-ui)
+
 ;;; sov-ui.el ends here

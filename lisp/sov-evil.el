@@ -1,6 +1,17 @@
 ;;; sov-evil.el --- Evil configuration -*- lexical-binding: t; -*-
 
-;; evil config
+;; This module sets up Evil, the Vim emulation layer, and loads the companion
+;; `evil-collection' package which provides Vim-friendly bindings for many of
+;; Emacs' built-in modes.
+
+
+;;; Evil core
+
+;; `evil-want-keybinding' is set to nil so that `evil-collection' can handle
+;; keybindings consistently across modes.  `C-u' scrolling is enabled to
+;; preserve the Vim page-up habit.  `undo-redo' is the modern Emacs 28+ undo
+;; system that works well with Evil.  `evil-respect-visual-line-mode' makes
+;; motion commands respect the visual lines created by soft wrapping.
 (use-package evil
   :ensure (:host github
            :repo "emacs-evil/evil"
@@ -16,9 +27,16 @@
   ;; Keep Vim-style page-up behavior in normal state instead of falling back
   ;; to Emacs' universal-argument prefix.
   (evil-global-set-key 'normal (kbd "C-u") #'evil-scroll-up)
+  ;; Space is the primary leader key for the custom key maps; comma is set as
+  ;; an additional leader used by the `flash' motion package.
   (evil-set-leader '(normal visual motion) (kbd "SPC"))
   (evil-set-leader '(normal visual motion) (kbd ",") t))
 
+
+;;; Evil Collection
+
+;; Provides Evil bindings for many built-in and third-party modes (dired,
+;; ibuffer, magit, etc.).  It must be loaded after Evil is activated.
 (use-package evil-collection
   :after evil
   :ensure (:host github
@@ -29,3 +47,5 @@
 
 
 (provide 'sov-evil)
+
+;;; sov-evil.el ends here

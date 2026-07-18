@@ -1,11 +1,25 @@
 ;;; sov-editor.el --- Editor Flow -*- lexical-binding: t; -*-
 
+;; This module collects packages that improve the editing flow: key discovery,
+;; delimiter colorization, undo navigation, surrounding text objects, minibuffer
+;; completion, file navigation, and fast jump motions.
+
+
+;;; Key discovery
+
+;; `which-key' displays the available keys after a prefix is pressed, making it
+;; easier to remember and discover new bindings.
 (use-package which-key
   :ensure nil
   :init
   (which-key-mode 1))
 
-;; Colorize nested delimiters only in Lisp-family buffers.
+
+;;; Delimiter colorization
+
+;; Colorize nested delimiters only in Lisp-family buffers.  The hook list is
+;; explicit so it does not run in unrelated modes and avoids pulling the mode
+;; into non-Lisp editing buffers.
 (use-package rainbow-delimiters
   :ensure (:host github
            :repo "Fanael/rainbow-delimiters"
@@ -22,22 +36,24 @@
          (hy-mode . rainbow-delimiters-mode)
          (fennel-mode . rainbow-delimiters-mode)))
 
-;; Visualize and navigate the undo tree.
+
+;;; Undo tree
+
+;; Visualize and navigate the undo tree.  The leader binding is registered
+;; before the package is loaded; the command itself is autoloaded on demand.
 (use-package vundo
   :ensure (:host github
            :repo "casouri/vundo"
            :wait t)
   :commands (vundo vundo-mode)
   :init
-  ;; Register the leader entry before vundo is loaded; the command itself is
-  ;; autoloaded on demand by `use-package'.
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>us") #'vundo)
   :config
   ;; Keep vundo's tree navigation close to Evil/Vim's hjkl convention.  The
   ;; original f/b bindings remain available as aliases for forward/backward.
   ;; Use Evil's state-aware definition so normal-state motion bindings do not
-  ;; shadow the vundo local map (notably `j`/`k`).
+  ;; shadow the vundo local map (notably `j'/`k').
   (evil-define-key 'normal vundo-mode-map
     (kbd "h") #'vundo-backward
     (kbd "l") #'vundo-forward
@@ -47,10 +63,12 @@
     (kbd "n") #'vundo-goto-next-saved
     (kbd "r") #'vundo-stem-root))
 
-;; Surround editing
+
+;;; Surround editing
+
 ;; Evil-surround provides operator-style add/delete/change operations.  Keep
-;; the custom prefix under `ga` so normal-state `gaa` composes naturally with
-;; motions, e.g. `gaaiw` followed by a double-quote; visual state uses the
+;; the custom prefix under `ga' so normal-state `gaa' composes naturally with
+;; motions, e.g. `gaaiw' followed by a double-quote; visual state uses the
 ;; selected region directly.
 (defvar sov-evil-surround-normal-prefix-map
   (let ((map (make-sparse-keymap)))
@@ -59,7 +77,10 @@
     (define-key map (kbd "d") #'evil-surround-delete)
     (define-key map (kbd "r") #'evil-surround-change)
     map)
-  "Normal-state prefix map for surround editing commands.")
+  "Normal-state prefix map for surround editing commands.
+
+\=`a' adds a surrounding pair, `A' adds a pair on a whole line, `d' deletes
+a surrounding pair, and `r' replaces an existing pair.")
 
 (defvar sov-evil-surround-visual-prefix-map
   (let ((map (make-sparse-keymap)))
@@ -75,14 +96,18 @@
   :after evil
   :config
   (global-evil-surround-mode 1)
-  ;; Evil normally assigns `ga` to `what-cursor-position`; `C-x =` remains
-  ;; available for that command after replacing `ga` with this prefix.
+  ;; Evil normally assigns `ga' to `what-cursor-position'; `C-x =' remains
+  ;; available for that command after replacing `ga' with this prefix.
   (evil-global-set-key 'normal (kbd "ga")
                        sov-evil-surround-normal-prefix-map)
   (evil-global-set-key 'visual (kbd "ga")
                        sov-evil-surround-visual-prefix-map))
 
-;; minibuffer completion and search
+
+;;; Minibuffer completion and search
+
+;; `project' is built into Emacs; require it so later consult/projectile
+;; integration finds it without relying on autoloads.
 (use-package project
   :ensure nil)
 
@@ -98,7 +123,7 @@
   (completion-category-overrides
    '((file (styles partial-completion)))))
 
-;; Render the completion candidate list in the minibuffer.
+;; Render the completion candidate list in the minibuffer with vertical layout.
 (use-package vertico
   :ensure (:host github
            :repo "minad/vertico"
@@ -120,7 +145,8 @@
   :init
   (marginalia-mode 1))
 
-;; Provide searchable buffer, project, navigation, and history commands with preview.
+;; Provide searchable buffer, project, navigation, and history commands with
+;; preview and integration with other packages.
 (use-package consult
   :ensure (:host github
            :repo "minad/consult"
@@ -162,7 +188,11 @@
   :after (embark consult)
   :hook (embark-collect-mode . consult-preview-at-point-mode))
 
-;; file tree
+
+;;; File tree
+
+;; Dired is built in; tune its listing format and re-enable the alternate-file
+;; command that is disabled by default for safety.
 (use-package dired
   :ensure nil
   :config
@@ -171,7 +201,10 @@
   (put 'dired-find-alternate-file 'disabled nil))
 
 (defun sov-dirvish-side-toggle-or-open ()
-  "Expand directories in Dirvish Side, otherwise open the current entry."
+  "Expand directories in Dirvish Side, otherwise open the current entry.
+
+When the cursor is on a directory in a Dirvish Side window, toggle its
+subtree; otherwise visit the file or directory at point normally."
   (interactive)
   (let ((session (dirvish-curr))
         (file (dired-get-filename nil t)))
@@ -204,10 +237,13 @@
    '((no-delete-other-windows . t)))
   :config
   (require 'dirvish-side)
-  (setq dirvish-attributes           ; The order *MATTERS* for some attributes
-      '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
-      dirvish-side-attributes
-      '(vc-state nerd-icons collapse file-size))
+  ;; The order of some attributes matters (e.g. `subtree-state' must be placed
+  ;; before `collapse' to render correctly).  The full dirvish view uses the
+  ;; full set; the side panel uses a smaller subset to save horizontal space.
+  (setq dirvish-attributes
+        '(vc-state subtree-state nerd-icons collapse git-msg file-time file-size)
+        dirvish-side-attributes
+        '(vc-state nerd-icons collapse file-size))
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>o") #'dirvish-dwim
     (kbd "<leader>e") #'sov-dirvish-side-toggle)
@@ -217,7 +253,12 @@
     (kbd "RET") #'sov-dirvish-side-toggle-or-open
     (kbd "SPC e") #'sov-dirvish-side-toggle))
 
-;; smarter navigate/search motion
+
+;;; Smarter navigate/search motion
+
+;; Flash is an `avy'-like jump package that supports operator-pending motion,
+;; multi-window jumps, and tree-sitter aware targets.  It also suppresses
+;; built-in `hlsearch' and integrates with `pulsar' for visual feedback.
 (use-package flash
   :ensure (:host github
            :repo "Prgebish/flash"
@@ -242,10 +283,16 @@
   :config
   (require 'flash-evil)
   (flash-evil-setup t)
+  ;; Bind `s' to Flash in all relevant Evil states so it works as a motion,
+  ;; operator target, and visual jump.
   (evil-global-set-key 'normal (kbd "s") #'flash-evil-jump)
   (evil-global-set-key 'visual (kbd "s") #'flash-evil-jump)
   (evil-global-set-key 'motion (kbd "s") #'flash-evil-jump)
   (evil-global-set-key 'operator (kbd "s") #'flash-evil-jump)
+  ;; Comma is a secondary leader reserved for Flash-related commands.
   (evil-set-leader '(normal visual motion) (kbd ",") t))
 
+
 (provide 'sov-editor)
+
+;;; sov-editor.el ends here
