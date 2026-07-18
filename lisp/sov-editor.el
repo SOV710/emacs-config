@@ -161,12 +161,16 @@ a surrounding pair, and `r' replaces an existing pair.")
   (evil-define-key '(normal visual motion) 'global
     (kbd "<leader>sb") #'consult-project-buffer
     (kbd "<leader>sf") #'project-find-file
+    (kbd "<leader>sd") #'consult-fd
     (kbd "<leader>sg") #'consult-ripgrep)
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format
         xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
-  (advice-add #'register-preview :override #'consult-register-window))
+  (advice-add #'register-preview :override #'consult-register-window)
+  :config
+  ;; Include files excluded by Git ignore rules in `consult-fd' results.
+  (add-to-list 'consult-fd-args "--no-ignore-vcs" t))
 
 ;; Offer context-sensitive actions for the current candidate or point target.
 (use-package embark
