@@ -3,6 +3,7 @@
 
 ;; initialize config dir
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "lisp/langs" user-emacs-directory))
 
 ;; elpaca bootstrap
 (defvar elpaca-installer-version 0.12)
@@ -113,3 +114,5 @@
 (add-hook 'after-make-frame-functions #'sov-apply-font)
 
 (require 'sov-editor)
+(require 'sov-lang-org)
+(require 'sov-lang-markdown)
