@@ -19,6 +19,8 @@
 /places
 /recentf
 /custom.el
+/projectile-bookmarks.eld
+/projectile-frecency.eld
 
 # Common state files
 /bookmarks
