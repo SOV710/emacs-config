@@ -17,3 +17,13 @@
 
 - [`fd`](https://github.com/sharkdp/fd)
 - [`ripgrep`](https://github.com/BurntSushi/ripgrep)
+- [Node.js](https://nodejs.org/)
+- [pnpm](https://pnpm.io/)
+
+`math-preview` uses a Node.js companion program.  After Elpaca has downloaded
+the package source, install its production dependencies with:
+
+```sh
+cd elpaca/sources/math-preview
+pnpm install --prod
+```
