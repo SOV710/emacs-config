@@ -18,7 +18,13 @@
 (use-package projectile
   :ensure (:host github
            :repo "bbatsov/projectile"
-           :wait t))
+           :wait t)
+  :config
+  ;; Treat `.project.el' as a Projectile project root marker as well as an
+  ;; Emacs `project.el' marker, so opening a project file can register it.
+  (add-to-list 'projectile-project-root-files-bottom-up ".project.el")
+  ;; Track projects visited through file buffers for the Dashboard list.
+  (projectile-mode 1))
 
 ;; `all-the-icons' is required by the original dashboard implementation for
 ;; some icon fallbacks; the active icon set below is `nerd-icons'.
