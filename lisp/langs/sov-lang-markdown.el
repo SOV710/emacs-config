@@ -353,9 +353,18 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
          (markdown-mode . sov-lang-markdown--protect-code-blocks-from-fill))
   :config
   (evil-define-key 'normal markdown-mode-map
+    (kbd "<leader>ma") #'math-preview-all
+    (kbd "<leader>mr") #'math-preview-at-point
+    (kbd "<leader>mc") #'math-preview-clear-all
+    (kbd "<leader>md") #'math-preview-clear-at-point
     (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
     (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
-    (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer))
+    (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
+  (evil-define-key 'visual markdown-mode-map
+    (kbd "<leader>ma") #'math-preview-all
+    (kbd "<leader>mr") #'math-preview-region
+    (kbd "<leader>mc") #'math-preview-clear-all
+    (kbd "<leader>md") #'math-preview-clear-region))
 
 ;; Doom uses GFM mode for README files because repositories commonly rely on
 ;; GitHub-specific tables, task lists, and fenced-code conventions.
@@ -372,9 +381,18 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
   :hook (markdown-ts-mode . visual-line-mode)
   :config
   (evil-define-key 'normal markdown-ts-mode-map
+    (kbd "<leader>ma") #'math-preview-all
+    (kbd "<leader>mr") #'math-preview-at-point
+    (kbd "<leader>mc") #'math-preview-clear-all
+    (kbd "<leader>md") #'math-preview-clear-at-point
     (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
     (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
-    (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer))
+    (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
+  (evil-define-key 'visual markdown-ts-mode-map
+    (kbd "<leader>ma") #'math-preview-all
+    (kbd "<leader>mr") #'math-preview-region
+    (kbd "<leader>mc") #'math-preview-clear-all
+    (kbd "<leader>md") #'math-preview-clear-region))
 
 ;; `valign' is installed by the Org language module and shared here.  It only
 ;; adds display properties; Markdown table source and semantics stay intact.
