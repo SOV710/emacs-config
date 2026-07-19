@@ -327,6 +327,13 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
          (expand-file-name "math-preview.js"
                            (expand-file-name "math-preview/"
                                              elpaca-sources-directory))))
+  ;; MathJax expects `em' to track font height and `ex' to approximate the
+  ;; x-height.  The package defaults use character width and full height,
+  ;; which makes fallback CJK text disproportionately small.
+  (math-preview-mathjax-em #'window-font-height)
+  (math-preview-mathjax-ex
+   (lambda ()
+     (/ (window-font-height) 2.0)))
   :hook ((markdown-mode . math-preview-all)
          (markdown-ts-mode . math-preview-all)))
 
