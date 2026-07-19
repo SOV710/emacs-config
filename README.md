@@ -57,6 +57,48 @@ After installing the dependencies, `math-preview` can start its companion
 process automatically when a Markdown buffer is opened.
 
 
+## Plugins
+
+This table lists each external package bootstrapped or installed by this
+configuration.  All entries use Elpaca, except Elpaca itself, which is
+bootstrapped by `init.el`.  Components configured with `:ensure nil`, such as
+`which-key`, `project`, `dired`, and `org`, are not external packages and are
+therefore omitted.
+
+| Package | Area | Used for |
+| --- | --- | --- |
+| `elpaca` | Package management | Bootstrap, build, and install packages from source repositories. |
+| `elpaca-use-package` | Package management | Route `use-package :ensure` recipes through Elpaca. |
+| `evil` | Modal editing | Provide Vim-style states, motions, operators, and keymaps. |
+| `evil-collection` | Modal editing | Add consistent Evil bindings to Emacs and third-party package modes. |
+| `evil-surround` | Modal editing | Add, delete, and replace surrounding delimiters. |
+| `flash` | Navigation | Jump quickly to visible targets across windows. |
+| `rainbow-delimiters` | Editing | Color nested delimiters in Lisp-family buffers. |
+| `vundo` | Editing | Browse and restore states through a visual undo tree. |
+| `orderless` | Completion | Match completion candidates by unordered space-separated components. |
+| `vertico` | Completion | Display completion candidates in a compact vertical minibuffer UI. |
+| `marginalia` | Completion | Annotate completion candidates with contextual metadata. |
+| `consult` | Completion and search | Provide enhanced buffer switching, navigation, file finding, and search commands. |
+| `embark` | Actions | Offer context-sensitive actions for the target at point or selected candidate. |
+| `embark-consult` | Completion integration | Preserve Consult previews in Embark collect and export buffers. |
+| `dirvish` | File manager | Extend Dired with a modern file manager and side panel. |
+| `projectile` | Projects | Track projects and provide the Dashboard project backend. |
+| `dashboard` | Startup | Display recent files, bookmarks, and projects at startup. |
+| `page-break-lines` | Dashboard | Render Dashboard page breaks as clean horizontal rules. |
+| `all-the-icons` | Dashboard | Supply Dashboard's compatibility icon dependency. |
+| `tokyo-night` | Theme | Provide the active Tokyo Night color theme. |
+| `nerd-icons` | Icons | Render icons in the mode line, Dashboard, and Dirvish. |
+| `diff-hl` | Version control | Show changed hunks and provide change counts for the custom mode line. |
+| `indent-bars` | Display | Draw indentation guides in programming buffers. |
+| `colorful-mode` | Display | Preview color literals in supported markup and programming buffers. |
+| `pulsar` | Navigation feedback | Pulse destinations after jumps and searches. |
+| `valign` | Tables | Align Org and Markdown tables by rendered pixel width. |
+| `markdown-mode` | Markdown | Edit and fontify conventional Markdown files. |
+| `markdown-ts-mode` | Markdown | Provide a Tree-sitter-based Markdown mode where Emacs does not bundle one. |
+| `markdown-table-wrap` | Markdown tables | Wrap and unwrap wide Markdown pipe tables. |
+| `math-preview` | Mathematics | Render LaTeX math as in-buffer MathJax SVG previews. |
+
+
 ## Keybindings
 
 The following tables list every keybinding explicitly declared by this
