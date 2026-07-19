@@ -24,6 +24,15 @@
   (kbd "C-S-j") #'shrink-window)
 
 
+;;; Session
+
+;; Save modified buffers as needed, kill every buffer, and then terminate the
+;; Emacs daemon or graphical session.  `confirm-kill-emacs' in `sov-core.el'
+;; keeps a final confirmation before Emacs exits.
+(evil-define-key '(normal visual motion) 'global
+  (kbd "<leader>qq") #'save-buffers-kill-emacs)
+
+
 ;;; Bookmarks
 
 ;; Keep bookmark commands in normal state so these single-key bindings do not
