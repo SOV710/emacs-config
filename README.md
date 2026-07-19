@@ -18,12 +18,40 @@
 - [`fd`](https://github.com/sharkdp/fd)
 - [`ripgrep`](https://github.com/BurntSushi/ripgrep)
 - [Node.js](https://nodejs.org/)
-- [pnpm](https://pnpm.io/)
 
-`math-preview` uses a Node.js companion program.  After Elpaca has downloaded
-the package source, install its production dependencies with:
+`math-preview` uses a Node.js companion program.  After the first Emacs start,
+Elpaca downloads the package source to `elpaca/sources/math-preview/`.  Install
+the companion's production dependencies from that directory with **one** of
+the following package managers:
+
+### npm
+
+```sh
+cd elpaca/sources/math-preview
+npm install --omit=dev
+```
+
+### Yarn
+
+```sh
+cd elpaca/sources/math-preview
+yarn install --production
+```
+
+### pnpm
 
 ```sh
 cd elpaca/sources/math-preview
 pnpm install --prod
 ```
+
+### Bun
+
+```sh
+cd elpaca/sources/math-preview
+bun install --production
+```
+
+These package managers are alternatives; only Node.js is required at runtime.
+After installing the dependencies, `math-preview` can start its companion
+process automatically when a Markdown buffer is opened.
