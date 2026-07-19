@@ -313,15 +313,22 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
   (add-hook 'fill-nobreak-predicate
             #'markdown-code-block-at-point-p nil t))
 
-;; Render LaTeX math expressions as image overlays while editing Markdown.
-;; `math-preview-auto-mode' refreshes previews after buffer changes; the
-;; external LaTeX and image-conversion tools are discovered automatically.
+;; Render LaTeX math expressions as image overlays in Markdown buffers.
+;; `math-preview-all' previews the current buffer when it is opened; it can
+;; also be called interactively after editing.  The Node.js companion is kept
+;; with the Elpaca source and is invoked explicitly through `node'.
 (use-package math-preview
   :ensure (:host gitlab
            :repo "matsievskiysv/math-preview"
            :wait t)
-  :hook ((markdown-mode . math-preview-auto-mode)
-         (markdown-ts-mode . math-preview-auto-mode)))
+  :custom
+  (math-preview-command
+   (list "node"
+         (expand-file-name "math-preview.js"
+                           (expand-file-name "math-preview/"
+                                             elpaca-sources-directory))))
+  :hook ((markdown-mode . math-preview-all)
+         (markdown-ts-mode . math-preview-all)))
 
 ;; Markdown mode supplies editing commands and font-locking; its optional
 ;; Tree-sitter mode is used when the installed version provides it.  Long
