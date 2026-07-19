@@ -313,8 +313,19 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
   (add-hook 'fill-nobreak-predicate
             #'markdown-code-block-at-point-p nil t))
 
+;; Render LaTeX math expressions as image overlays while editing Markdown.
+;; `math-preview-auto-mode' refreshes previews after buffer changes; the
+;; external LaTeX and image-conversion tools are discovered automatically.
+(use-package math-preview
+  :ensure (:host gitlab
+           :repo "matsievskiysv/math-preview"
+           :wait t)
+  :hook ((markdown-mode . math-preview-auto-mode)
+         (markdown-ts-mode . math-preview-auto-mode)))
+
 ;; Markdown mode supplies editing commands and font-locking; its optional
-;; Tree-sitter mode is used when the installed version provides it.
+;; Tree-sitter mode is used when the installed version provides it.  Long
+;; paragraphs wrap visually without inserting newlines while typing.
 (use-package markdown-mode
   :ensure (:host github
            :repo "jrblevin/markdown-mode"
@@ -332,7 +343,6 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
   (markdown-hide-urls nil)
   (markdown-mouse-follow-link nil)
   :hook ((markdown-mode . visual-line-mode)
-         (markdown-mode . turn-on-auto-fill)
          (markdown-mode . sov-lang-markdown--protect-code-blocks-from-fill))
   :config
   (evil-define-key 'normal markdown-mode-map
@@ -352,8 +362,7 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
            :repo "LionyxML/markdown-ts-mode"
            :wait t)
   :commands markdown-ts-mode
-  :hook ((markdown-ts-mode . visual-line-mode)
-         (markdown-ts-mode . turn-on-auto-fill))
+  :hook (markdown-ts-mode . visual-line-mode)
   :config
   (evil-define-key 'normal markdown-ts-mode-map
     (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
