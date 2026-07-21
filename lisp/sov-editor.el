@@ -235,18 +235,20 @@ subtree; otherwise visit the file or directory at point normally."
         (t 'file)))
 
 (defun sov-dirvish-create-entry ()
-  "Create a file or directory in the current Dirvish directory."
+  "Create a file or directory in the Dirvish directory at point."
   (interactive)
-  (let* ((name (read-string "Create file/directory: "))
+  (let* ((directory (dired-current-directory))
+         (name (read-string
+                (format "Create file/directory in %s: "
+                        (abbreviate-file-name directory))))
          (kind (sov-dirvish-create-kind name)))
     (when kind
       (require 'dired-aux)
       (let ((path (expand-file-name (directory-file-name name)
-                                    default-directory)))
+                                    directory)))
         (if (eq kind 'directory)
             (dired-create-directory path)
-          (dired-create-empty-file path))
-        (revert-buffer nil t)))))
+          (dired-create-empty-file path))))))
 
 (use-package dirvish
   :ensure (:host github
