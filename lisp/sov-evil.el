@@ -33,6 +33,23 @@
   (evil-set-leader '(normal visual motion) (kbd ",") t))
 
 
+;;; Han word boundaries
+
+;; `emt' integrates jieba-rs with Emacs's native word-boundary table.  Evil
+;; delegates word motions and word text objects through that table, so this
+;; makes Chinese `w', `b', `e', `iw', and `aw' segmentation-aware without
+;; replacing their key bindings.  Install the native module once with
+;; `M-x emt-download-module'; the README records the first-run procedure.
+(use-package emt
+  :after evil
+  :ensure (:host github
+           :repo "LuciusChen/emt"
+           :files ("*.el")
+           :wait t)
+  :config
+  (global-emt-mode 1))
+
+
 ;;; Evil Collection
 
 ;; Provides Evil bindings for many built-in and third-party modes (dired,

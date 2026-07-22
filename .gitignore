@@ -7,6 +7,9 @@
 *.elc
 *.eln
 
+# Downloaded native modules
+/modules/libemt_module.*
+
 # Packaging
 .cask/
 .eask/

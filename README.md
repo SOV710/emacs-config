@@ -18,6 +18,7 @@
 - [`fd`](https://github.com/sharkdp/fd)
 - [`ripgrep`](https://github.com/BurntSushi/ripgrep)
 - [Node.js](https://nodejs.org/)
+- GNU Emacs built with dynamic-module support (for `emt`)
 
 `math-preview` uses a Node.js companion program.  After the first Emacs start,
 Elpaca downloads the package source to `elpaca/sources/math-preview/`.  Install
@@ -56,6 +57,88 @@ These package managers are alternatives; only Node.js is required at runtime.
 After installing the dependencies, `math-preview` can start its companion
 process automatically when a Markdown buffer is opened.
 
+### EMT Native Module
+
+`emt` has two parts:
+
+1. `emt.el` installs Han word-boundary handlers into Emacs.  This is the part
+   installed by Elpaca and configured in `sov-evil.el`.
+2. A platform-specific dynamic module performs the actual jieba-rs
+   segmentation.  Emacs loads this shared library into its own process.
+
+Elpaca fetches the complete source repository into `elpaca/sources/emt/`, but
+the recipe uses `:files ("*.el")`.  Consequently, Elpaca installs the Elisp
+front end only; it does not run Cargo or compile the native module.
+
+The repository can appear C++-heavy because it vendors `module/emacs-module.h`,
+the Emacs C API header.  Its project-owned native implementation is Rust:
+`module/src/lib.rs` calls `jieba-rs`, while `module/build.rs` uses `bindgen` to
+generate Rust bindings for that C API.  It does not build a project-owned C++
+implementation.
+
+At runtime, the path is:
+
+```text
+Evil w / b / e / iw / aw
+  -> Emacs word-boundary lookup
+  -> emt.el
+  -> libemt_module shared library
+  -> jieba-rs
+  -> word boundaries returned to Emacs
+```
+
+#### Download a Pre-built Module
+
+After Elpaca has installed `emt`, invoke this Emacs command once:
+
+```text
+M-x emt-download-module
+```
+
+On a supported platform, it downloads the matching release binary and stores
+it at `emt-lib-path`.  With this configuration's default
+`user-emacs-directory`, that is `modules/libemt_module.<suffix>`; on this
+Linux x86_64 host, the downloaded release asset is
+`libEMT-x86_64-unknown-linux-gnu.so`, stored locally as
+`modules/libemt_module.so`.  The local module path is ignored by this
+repository.
+
+No local Rust, C++, or Cargo build happens in this route.  The configured
+`global-emt-mode` is already active, so Chinese word motions work as soon as
+the module has been downloaded and loaded.  `M-x emt-ensure` can be used to
+verify that Emacs can load the installed module.
+
+#### Build the Module Locally
+
+Build locally when you want to inspect and compile the native code yourself,
+or when a matching pre-built release is unavailable.  This requires a Rust
+toolchain with `cargo` and the Clang/libclang libraries required by `bindgen`.
+The repository already includes the Emacs module header used for the bindings.
+
+For this configuration's default location on Linux:
+
+```sh
+cd ~/.config/emacs/elpaca/sources/emt/module
+cargo build --release
+install -Dm755 target/release/libemt_module.so \
+  ~/.config/emacs/modules/libemt_module.so
+```
+
+If `emt-lib-path` has been customized, install the output at that path instead.
+Then run `M-x emt-ensure` to load and verify the module.
+
+| Choice | Pre-built release | Local build |
+| --- | --- | --- |
+| Setup | Run `M-x emt-download-module` once. | Install Rust and libclang, then run Cargo. |
+| Compilation on this machine | None. | Rust compiles `libemt_module.so`. |
+| Suitable for | Quickly trying the plugin on a supported platform. | Auditing the source, controlling the build, or unsupported platforms. |
+| Trust boundary | Trust the project's released native binary. | Trust the source, Rust dependencies, and local toolchain; no release binary is executed. |
+
+Both routes load native code into the Emacs process with the same privileges as
+your editor.  A local build removes reliance on the published binary artifact,
+but it is not a sandbox and does not remove the need to trust the source and
+its dependencies.
+
 
 ## Plugins
 
@@ -71,6 +154,7 @@ therefore omitted.
 | `elpaca-use-package` | Package management | Route `use-package :ensure` recipes through Elpaca. |
 | `evil` | Modal editing | Provide Vim-style states, motions, operators, and keymaps. |
 | `evil-collection` | Modal editing | Add consistent Evil bindings to Emacs and third-party package modes. |
+| `emt` | Chinese editing | Use jieba-rs-backed Han word boundaries for Emacs and Evil word motions and text objects. |
 | `evil-surround` | Modal editing | Add, delete, and replace surrounding delimiters. |
 | `flash` | Navigation | Jump quickly to visible targets across windows. |
 | `rainbow-delimiters` | Editing | Color nested delimiters in Lisp-family buffers. |
@@ -132,6 +216,16 @@ Evil, Evil Collection, or individual packages.
 | `'` | Normal | `list-bookmarks` | List bookmarks. |
 | `C-a` | Normal | `sov-evil-select-whole-buffer` | Select the entire accessible buffer in Visual Line state. |
 | `C-S-v` | Global Emacs map | `yank` | Paste from the kill ring. |
+
+### Chinese Word Boundaries
+
+`global-emt-mode` changes existing Evil word operations within Han text.  It
+does not change the whitespace-delimited `W`, `B`, and `E` motions.
+
+| Key | State / context | Behavior |
+| --- | --- | --- |
+| `w`, `b`, `e` | Normal, Visual, Motion, Operator-pending | Move at jieba-rs Chinese word boundaries. |
+| `iw`, `aw` | Visual and Operator-pending | Select an inner or outer jieba-rs Chinese word. |
 
 ### Completion, Search, and Actions
 
