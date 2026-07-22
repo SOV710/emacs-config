@@ -120,8 +120,7 @@ For this configuration's default location on Linux:
 ```sh
 cd ~/.config/emacs/elpaca/sources/emt/module
 cargo build --release
-install -Dm755 target/release/libemt_module.so \
-  ~/.config/emacs/modules/libemt_module.so
+install -Dm755 target/release/libemt_module.so ~/.config/emacs/modules/libemt_module.so
 ```
 
 If `emt-lib-path` has been customized, install the output at that path instead.
