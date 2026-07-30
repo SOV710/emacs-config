@@ -18,6 +18,8 @@
 - [`fd`](https://github.com/sharkdp/fd)
 - [`ripgrep`](https://github.com/BurntSushi/ripgrep)
 - [Node.js](https://nodejs.org/)
+- GNU Emacs 30.1+ built with Tree-sitter support (for native grammar loading)
+- Git, plus a working C/C++ compiler and linker (for Tree-sitter grammar installation)
 - GNU Emacs built with dynamic-module support (for `emt`)
 
 `math-preview` uses a Node.js companion program.  After the first Emacs start,
@@ -180,6 +182,35 @@ therefore omitted.
 | `markdown-ts-mode` | Markdown | Provide a Tree-sitter-based Markdown mode where Emacs does not bundle one. |
 | `markdown-table-wrap` | Markdown tables | Wrap and unwrap wide Markdown pipe tables. |
 | `math-preview` | Mathematics | Render LaTeX math as in-buffer MathJax SVG previews. |
+
+
+## Tree-sitter
+
+Tree-sitter uses Emacs 30's built-in `treesit` support, not an Elpaca package.
+Each grammar source is declared in its own `lisp/langs/sov-lang-*.el` module.
+The explicit install commands clone each grammar directly from its registered
+upstream Git source, compile it into `tree-sitter/`, and that output directory
+is ignored by this repository.  Opening a file never downloads or compiles a
+grammar.
+
+| Ex command | Behavior |
+| --- | --- |
+| `:TSInstall [language ...]` | Build missing grammars. With no arguments, install every configured grammar. |
+| `:TSUpdate [language ...]` | Re-clone and rebuild selected grammars, or all grammars with no arguments. |
+| `:TSClear [language ...]` | Confirm and remove managed shared libraries. Restart Emacs to unload a grammar already loaded into the process. |
+| `:TSStatus [language ...]` | Show grammar-library, compiler, and major-mode integration status. |
+
+The corresponding `M-x` commands are `sov-treesit-install`,
+`sov-treesit-update`, `sov-treesit-clear`, and `sov-treesit-status`.  Commands
+accept either a configured language group such as `rust`, `typescript`, or
+`markdown`, or an individual grammar such as `tsx`; `all` is also accepted.
+
+When Emacs provides (or you later install) a dedicated `*-ts-mode`, the file
+dispatcher selects it only after the required grammar is available.  Languages
+without a dedicated mode still receive a native parser in their conventional
+mode, or a clearly named parser-only fallback when no conventional mode is
+installed.  This keeps grammar installation centralized without adding LSP,
+formatters, or unrelated language packages.
 
 
 ## Keybindings

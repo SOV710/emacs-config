@@ -2,6 +2,7 @@
 
 (require 'cl-lib)
 (require 'subr-x)
+(require 'sov-treesit)
 
 (declare-function markdown-table-wrap "markdown-table-wrap"
                   (text width &optional max-cell-height strip-markup compact))
@@ -298,15 +299,26 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
            :wait t)
   :commands (markdown-table-wrap markdown-table-wrap-unwrap))
 
+(defun sov-lang-markdown--external-ts-mode-ready-p ()
+  "Return non-nil when the external Markdown Tree-sitter mode is usable.
+The LionyxML package is used only on Emacs 30, because Emacs 31 and later
+ship their own `markdown-ts-mode'."
+  (and (< emacs-major-version 31)
+       (fboundp 'treesit-ready-p)
+       (treesit-ready-p 'markdown t)
+       (treesit-ready-p 'markdown-inline t)
+       (fboundp 'markdown-ts-mode)))
+
 (defun sov-lang-markdown-mode ()
-  "Use Tree-sitter Markdown when both grammars are ready, otherwise fall back."
+  "Select the configured Markdown mode for the current Emacs version."
   (interactive)
-  (if (and (fboundp 'treesit-ready-p)
-           (treesit-ready-p 'markdown t)
-           (treesit-ready-p 'markdown-inline t)
-           (fboundp 'markdown-ts-mode))
-      (markdown-ts-mode)
-    (markdown-mode)))
+  (cond
+   ((>= emacs-major-version 31)
+    (markdown-ts-mode))
+   ((sov-lang-markdown--external-ts-mode-ready-p)
+    (markdown-ts-mode))
+   (t
+    (markdown-mode))))
 
 (defun sov-lang-markdown--protect-code-blocks-from-fill ()
   "Prevent `auto-fill-mode' from wrapping fenced code blocks."
@@ -377,29 +389,52 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
 ;; GitHub-specific tables, task lists, and fenced-code conventions.
 (add-to-list 'auto-mode-alist '("/README\\(?:\\.md\\)?\\'" . gfm-mode))
 
-;; Emacs 31 provides this mode itself.  On Emacs 30, install the same focused
-;; compatibility package Doom uses rather than pretending `markdown-mode'
-;; consumes Tree-sitter grammars directly.
-(use-package markdown-ts-mode
-  :ensure (:host github
-           :repo "LionyxML/markdown-ts-mode"
-           :wait t)
-  :commands markdown-ts-mode
-  :hook (markdown-ts-mode . visual-line-mode)
-  :config
-  (evil-define-key 'normal markdown-ts-mode-map
-    (kbd "<leader>ma") #'math-preview-all
-    (kbd "<leader>mr") #'math-preview-at-point
-    (kbd "<leader>mc") #'math-preview-clear-all
-    (kbd "<leader>md") #'math-preview-clear-at-point
-    (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
-    (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
-    (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
-  (evil-define-key 'visual markdown-ts-mode-map
-    (kbd "<leader>ma") #'math-preview-all
-    (kbd "<leader>mr") #'math-preview-region
-    (kbd "<leader>mc") #'math-preview-clear-all
-    (kbd "<leader>md") #'math-preview-clear-region))
+;; Emacs 31 ships an enhanced Tree-sitter Markdown mode.  Keep its setup
+;; separate from `markdown-mode' so the latter remains available as the
+;; Emacs 30 fallback and for manual use.
+(when (>= emacs-major-version 31)
+  (require 'markdown-ts-mode)
+  (setq markdown-ts-fontify-code-blocks-natively t)
+  (add-hook 'markdown-ts-mode-hook #'visual-line-mode)
+  (with-eval-after-load 'evil
+    (evil-define-key 'normal markdown-ts-mode-map
+      (kbd "<leader>ma") #'math-preview-all
+      (kbd "<leader>mr") #'math-preview-at-point
+      (kbd "<leader>mc") #'math-preview-clear-all
+      (kbd "<leader>md") #'math-preview-clear-at-point
+      (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
+      (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
+      (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
+    (evil-define-key 'visual markdown-ts-mode-map
+      (kbd "<leader>ma") #'math-preview-all
+      (kbd "<leader>mr") #'math-preview-region
+      (kbd "<leader>mc") #'math-preview-clear-all
+      (kbd "<leader>md") #'math-preview-clear-region)))
+
+;; On Emacs 30, install the focused compatibility package Doom uses rather
+;; than pretending `markdown-mode' consumes Tree-sitter grammars directly.
+;; Its current release deliberately signals an error when loaded by Emacs 31.
+(when (< emacs-major-version 31)
+  (use-package markdown-ts-mode
+    :ensure (:host github
+             :repo "LionyxML/markdown-ts-mode"
+             :wait t)
+    :commands markdown-ts-mode
+    :hook (markdown-ts-mode . visual-line-mode)
+    :config
+    (evil-define-key 'normal markdown-ts-mode-map
+      (kbd "<leader>ma") #'math-preview-all
+      (kbd "<leader>mr") #'math-preview-at-point
+      (kbd "<leader>mc") #'math-preview-clear-all
+      (kbd "<leader>md") #'math-preview-clear-at-point
+      (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
+      (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
+      (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
+    (evil-define-key 'visual markdown-ts-mode-map
+      (kbd "<leader>ma") #'math-preview-all
+      (kbd "<leader>mr") #'math-preview-region
+      (kbd "<leader>mc") #'math-preview-clear-all
+      (kbd "<leader>md") #'math-preview-clear-region)))
 
 ;; `valign' is installed by the Org language module and shared here.  It only
 ;; adds display properties; Markdown table source and semantics stay intact.
@@ -411,19 +446,25 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
          (gfm-mode . valign-mode)
          (markdown-ts-mode . valign-mode)))
 
-;; Register Markdown Tree-sitter grammars when the built-in `treesit' package
-;; is available.  Install them interactively with `treesit-install-language-grammar'.
-(when (require 'treesit nil t)
-  (let* ((url "https://github.com/tree-sitter-grammars/tree-sitter-markdown")
-         ;; Grammar v0.5 requires Tree-sitter ABI 15 or newer.
-         (revision (if (< (treesit-library-abi-version) 15)
-                       "v0.4.1"
-                     "v0.5.1")))
-    (add-to-list 'treesit-language-source-alist
-                 `(markdown ,url ,revision "tree-sitter-markdown/src"))
-    (add-to-list 'treesit-language-source-alist
-                 `(markdown-inline ,url ,revision
-                                   "tree-sitter-markdown-inline/src"))))
+;; Keep Markdown in the shared Tree-sitter registry so `:TSInstall markdown'
+;; installs both grammars required by `markdown-ts-mode'.  Grammar v0.5
+;; requires Tree-sitter ABI 15 or newer.
+(sov-treesit-register-language
+ 'markdown
+ `((:language markdown
+    :url "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
+    :revision ,(lambda ()
+                 (if (< (treesit-library-abi-version) 15)
+                     "v0.4.1"
+                   "v0.5.1"))
+    :source-dir "tree-sitter-markdown/src")
+   (:language markdown-inline
+    :url "https://github.com/tree-sitter-grammars/tree-sitter-markdown"
+    :revision ,(lambda ()
+                 (if (< (treesit-library-abi-version) 15)
+                     "v0.4.1"
+                   "v0.5.1"))
+    :source-dir "tree-sitter-markdown-inline/src")))
 
 
 (provide 'sov-lang-markdown)

@@ -9,6 +9,7 @@
 
 # Downloaded native modules
 /modules/libemt_module.*
+/tree-sitter/
 
 # Packaging
 .cask/

@@ -419,7 +419,7 @@ See `sov-ui--path-variants' for the list format."
             (if buffer-file-name
                 (sov-ui--path-variants
                  buffer-file-name
-                 (when-let ((project (project-current nil)))
+                 (when-let* ((project (project-current nil)))
                    (project-root project)))
               (list (buffer-name)
                     (buffer-name)
@@ -794,7 +794,7 @@ name so the mode line never becomes completely blank."
   "Return the right side of the mode line for the selected window.
 This reuses the layout stored by `sov-ui--mode-line-left' in the window
 parameter."
-  (when-let ((layout
+  (when-let* ((layout
               (window-parameter
                (selected-window)
                'sov-ui--mode-line-layout)))

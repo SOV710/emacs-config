@@ -37,6 +37,19 @@
     (should (memq #'sov-markdown-table-projection-write-contents
                   write-contents-functions))))
 
+(ert-deftest sov-markdown-emacs-31-uses-built-in-markdown-ts-mode ()
+  "Use the built-in mode rather than the deprecated external package."
+  (let ((emacs-major-version 31)
+        selected)
+    (cl-letf (((symbol-function 'treesit-ready-p)
+               (lambda (&rest _arguments) t))
+              ((symbol-function 'markdown-ts-mode)
+               (lambda () (setq selected 'markdown-ts-mode)))
+              ((symbol-function 'markdown-mode)
+               (lambda () (setq selected 'markdown-mode))))
+      (sov-lang-markdown-mode))
+    (should (eq selected 'markdown-ts-mode))))
+
 (ert-deftest sov-markdown-table-projection-writer-defers-without-markers ()
   (sov-lang-markdown-test--with-buffer sov-lang-markdown-test--table
     (should-not (sov-markdown-table-projection-write-contents))))
