@@ -179,7 +179,6 @@ therefore omitted.
 | `pulsar` | Navigation feedback | Pulse destinations after jumps and searches. |
 | `valign` | Tables | Align Org and Markdown tables by rendered pixel width. |
 | `markdown-mode` | Markdown | Edit and fontify conventional Markdown files. |
-| `markdown-ts-mode` | Markdown | Provide a Tree-sitter-based Markdown mode where Emacs does not bundle one. |
 | `markdown-table-wrap` | Markdown tables | Wrap and unwrap wide Markdown pipe tables. |
 | `math-preview` | Mathematics | Render LaTeX math as in-buffer MathJax SVG previews. |
 
@@ -311,7 +310,9 @@ does not change the whitespace-delimited `W`, `B`, and `E` motions.
 
 ### Markdown and Math Preview
 
-These bindings apply to both `markdown-mode` and `markdown-ts-mode`.
+Emacs 31 and later use the built-in `markdown-ts-mode`; Emacs 30 uses
+`markdown-mode` directly, without an external Tree-sitter Markdown package.
+These bindings apply to both modes.
 
 | Key | State | Command | Purpose |
 | --- | --- | --- | --- |

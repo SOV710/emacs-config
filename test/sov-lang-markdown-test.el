@@ -38,7 +38,7 @@
                   write-contents-functions))))
 
 (ert-deftest sov-markdown-emacs-31-uses-built-in-markdown-ts-mode ()
-  "Use the built-in mode rather than the deprecated external package."
+  "Use the Tree-sitter Markdown mode bundled with Emacs 31."
   (let ((emacs-major-version 31)
         selected)
     (cl-letf (((symbol-function 'treesit-ready-p)
@@ -49,6 +49,17 @@
                (lambda () (setq selected 'markdown-mode))))
       (sov-lang-markdown-mode))
     (should (eq selected 'markdown-ts-mode))))
+
+(ert-deftest sov-markdown-emacs-30-uses-markdown-mode ()
+  "Use conventional Markdown mode instead of an external Tree-sitter mode."
+  (let ((emacs-major-version 30)
+        selected)
+    (cl-letf (((symbol-function 'markdown-ts-mode)
+               (lambda () (setq selected 'markdown-ts-mode)))
+              ((symbol-function 'markdown-mode)
+               (lambda () (setq selected 'markdown-mode))))
+      (sov-lang-markdown-mode))
+    (should (eq selected 'markdown-mode))))
 
 (ert-deftest sov-markdown-table-projection-writer-defers-without-markers ()
   (sov-lang-markdown-test--with-buffer sov-lang-markdown-test--table

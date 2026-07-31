@@ -299,26 +299,12 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
            :wait t)
   :commands (markdown-table-wrap markdown-table-wrap-unwrap))
 
-(defun sov-lang-markdown--external-ts-mode-ready-p ()
-  "Return non-nil when the external Markdown Tree-sitter mode is usable.
-The LionyxML package is used only on Emacs 30, because Emacs 31 and later
-ship their own `markdown-ts-mode'."
-  (and (< emacs-major-version 31)
-       (fboundp 'treesit-ready-p)
-       (treesit-ready-p 'markdown t)
-       (treesit-ready-p 'markdown-inline t)
-       (fboundp 'markdown-ts-mode)))
-
 (defun sov-lang-markdown-mode ()
   "Select the configured Markdown mode for the current Emacs version."
   (interactive)
-  (cond
-   ((>= emacs-major-version 31)
-    (markdown-ts-mode))
-   ((sov-lang-markdown--external-ts-mode-ready-p)
-    (markdown-ts-mode))
-   (t
-    (markdown-mode))))
+  (if (>= emacs-major-version 31)
+      (markdown-ts-mode)
+    (markdown-mode)))
 
 (defun sov-lang-markdown--protect-code-blocks-from-fill ()
   "Prevent `auto-fill-mode' from wrapping fenced code blocks."
@@ -349,8 +335,7 @@ ship their own `markdown-ts-mode'."
   :hook ((markdown-mode . math-preview-all)
          (markdown-ts-mode . math-preview-all)))
 
-;; Markdown mode supplies editing commands and font-locking; its optional
-;; Tree-sitter mode is used when the installed version provides it.  Long
+;; `markdown-mode' supplies the Emacs 30 fallback and GFM support.  Long
 ;; paragraphs wrap visually without inserting newlines while typing.
 (use-package markdown-mode
   :ensure (:host github
@@ -390,38 +375,13 @@ ship their own `markdown-ts-mode'."
 (add-to-list 'auto-mode-alist '("/README\\(?:\\.md\\)?\\'" . gfm-mode))
 
 ;; Emacs 31 ships an enhanced Tree-sitter Markdown mode.  Keep its setup
-;; separate from `markdown-mode' so the latter remains available as the
-;; Emacs 30 fallback and for manual use.
+;; separate from `markdown-mode': Emacs 30 uses the latter directly, without
+;; installing an external Tree-sitter Markdown mode.
 (when (>= emacs-major-version 31)
   (require 'markdown-ts-mode)
   (setq markdown-ts-fontify-code-blocks-natively t)
   (add-hook 'markdown-ts-mode-hook #'visual-line-mode)
   (with-eval-after-load 'evil
-    (evil-define-key 'normal markdown-ts-mode-map
-      (kbd "<leader>ma") #'math-preview-all
-      (kbd "<leader>mr") #'math-preview-at-point
-      (kbd "<leader>mc") #'math-preview-clear-all
-      (kbd "<leader>md") #'math-preview-clear-at-point
-      (kbd "<localleader>tw") #'sov-markdown-table-wrap-at-point
-      (kbd "<localleader>tu") #'sov-markdown-table-unwrap-at-point
-      (kbd "<localleader>tU") #'sov-markdown-table-unwrap-buffer)
-    (evil-define-key 'visual markdown-ts-mode-map
-      (kbd "<leader>ma") #'math-preview-all
-      (kbd "<leader>mr") #'math-preview-region
-      (kbd "<leader>mc") #'math-preview-clear-all
-      (kbd "<leader>md") #'math-preview-clear-region)))
-
-;; On Emacs 30, install the focused compatibility package Doom uses rather
-;; than pretending `markdown-mode' consumes Tree-sitter grammars directly.
-;; Its current release deliberately signals an error when loaded by Emacs 31.
-(when (< emacs-major-version 31)
-  (use-package markdown-ts-mode
-    :ensure (:host github
-             :repo "LionyxML/markdown-ts-mode"
-             :wait t)
-    :commands markdown-ts-mode
-    :hook (markdown-ts-mode . visual-line-mode)
-    :config
     (evil-define-key 'normal markdown-ts-mode-map
       (kbd "<leader>ma") #'math-preview-all
       (kbd "<leader>mr") #'math-preview-at-point
