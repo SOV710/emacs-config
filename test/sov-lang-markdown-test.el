@@ -61,6 +61,22 @@
       (sov-lang-markdown-mode))
     (should (eq selected 'markdown-mode))))
 
+(ert-deftest sov-markdown-emacs-31-appearance-customizations ()
+  "Apply the configured native Markdown display preferences."
+  (skip-unless (>= emacs-major-version 31))
+  (should (default-value 'markdown-ts-hide-markup))
+  (should (equal markdown-ts-ellipsis " "))
+  (should (equal markdown-ts-checked-checkbox '("☑" . "+")))
+  (should (equal markdown-ts-unchecked-checkbox '("☐" . "-")))
+  (dolist (face-height '((markdown-ts-heading-1 . 1.50)
+                         (markdown-ts-heading-2 . 1.35)
+                         (markdown-ts-heading-3 . 1.25)
+                         (markdown-ts-heading-4 . 1.18)
+                         (markdown-ts-heading-5 . 1.12)
+                         (markdown-ts-heading-6 . 1.06)))
+    (should (equal (face-attribute (car face-height) :height nil)
+                   (cdr face-height)))))
+
 (ert-deftest sov-markdown-table-projection-writer-defers-without-markers ()
   (sov-lang-markdown-test--with-buffer sov-lang-markdown-test--table
     (should-not (sov-markdown-table-projection-write-contents))))

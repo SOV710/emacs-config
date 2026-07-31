@@ -379,7 +379,20 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
 ;; installing an external Tree-sitter Markdown mode.
 (when (>= emacs-major-version 31)
   (require 'markdown-ts-mode)
-  (setq markdown-ts-fontify-code-blocks-natively t)
+  (setq-default markdown-ts-hide-markup nil)
+  (setq markdown-ts-ellipsis " "
+        markdown-ts-checked-checkbox '("☑" . "+")
+        markdown-ts-unchecked-checkbox '("☐" . "-")
+        markdown-ts-fontify-code-blocks-natively t)
+  ;; Keep every heading larger than body text while preserving a clear visual
+  ;; hierarchy.  `markdown-ts-setext-heading' inherits the level-one face.
+  (dolist (face-height '((markdown-ts-heading-1 . 1.50)
+                         (markdown-ts-heading-2 . 1.35)
+                         (markdown-ts-heading-3 . 1.25)
+                         (markdown-ts-heading-4 . 1.18)
+                         (markdown-ts-heading-5 . 1.12)
+                         (markdown-ts-heading-6 . 1.06)))
+    (set-face-attribute (car face-height) nil :height (cdr face-height)))
   (add-hook 'markdown-ts-mode-hook #'visual-line-mode)
   (with-eval-after-load 'evil
     (evil-define-key 'normal markdown-ts-mode-map
