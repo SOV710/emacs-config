@@ -64,7 +64,7 @@
 (ert-deftest sov-markdown-emacs-31-appearance-customizations ()
   "Apply the configured native Markdown display preferences."
   (skip-unless (>= emacs-major-version 31))
-  (should (default-value 'markdown-ts-hide-markup))
+  (should-not (default-value 'markdown-ts-hide-markup))
   (should (equal markdown-ts-ellipsis " "))
   (should (equal markdown-ts-checked-checkbox '("☑" . "+")))
   (should (equal markdown-ts-unchecked-checkbox '("☐" . "-")))
