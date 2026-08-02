@@ -57,9 +57,9 @@
 
 (defconst sov-treesit-test--grammars
   '(asm astro bash c clojure cmake css csv dart dockerfile elisp fish ghostty
-        go haskell html json kdl latex lua make markdown markdown-inline
-        powershell proto python qmljs racket rust sql taskwarrior toml tsx
-        typescript typst vue yaml))
+        go haskell html javascript jsdoc json kdl latex lua make markdown
+        markdown-inline powershell proto python qmljs racket rust sql
+        taskwarrior toml tsx typescript typst vue yaml))
 
 (ert-deftest sov-treesit-registers-every-configured-language-group ()
   (should (equal (sov-treesit-language-groups)
@@ -90,7 +90,7 @@
 (ert-deftest sov-treesit-selection-expands-a-language-group ()
   (should (equal (mapcar (lambda (spec) (plist-get spec :language))
                          (sov-treesit--parse-selection '(typescript)))
-                 '(typescript tsx)))
+                 '(javascript typescript tsx jsdoc)))
   (should (= (length (sov-treesit--parse-selection nil))
              (length sov-treesit-test--grammars))))
 
@@ -109,14 +109,18 @@
               'sov-treesit-python-mode))
   (should (eq (cdr (assoc "\\.tsx\\'" auto-mode-alist))
               'sov-treesit-tsx-mode))
+  (should (eq (cdr (assoc "\\.\\(?:[cm]?js\\|jsx\\)\\'" auto-mode-alist))
+              'sov-treesit-javascript-mode))
   (should (eq (cdr (assoc "\\.astro\\'" auto-mode-alist))
               'sov-treesit-astro-mode)))
 
 (ert-deftest sov-treesit-falls-back-without-an-installed-grammar ()
-  (with-temp-buffer
-    (setq buffer-file-name "/tmp/example.py")
-    (sov-treesit-python-mode)
-    (should (eq major-mode 'python-mode))))
+  (cl-letf (((symbol-function 'treesit-ready-p)
+             (lambda (&rest _) nil)))
+    (with-temp-buffer
+      (setq buffer-file-name "/tmp/example.py")
+      (sov-treesit-python-mode)
+      (should (eq major-mode 'python-mode)))))
 
 (ert-deftest sov-treesit-uses-a-parser-only-mode-when-no-major-mode-exists ()
   (let (created)
@@ -139,7 +143,42 @@
               ((symbol-function 'sov-treesit--grammar-available-p)
                (lambda (_language) t)))
       (sov-treesit--install-selection '(typescript) t)
-      (should (equal (nreverse installed) '(typescript tsx))))))
+      (should (equal (nreverse installed)
+                     '(javascript typescript tsx jsdoc))))))
+
+(ert-deftest sov-protobuf-tree-sitter-mode-provides-font-lock ()
+  (skip-unless (treesit-ready-p 'proto t))
+  (with-temp-buffer
+    (insert "syntax = \"proto3\";\nmessage User { string name = 1; }\n")
+    (protobuf-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "message")
+    (should (eq major-mode 'protobuf-ts-mode))
+    (should (eq (get-text-property (1- (point)) 'face)
+                'font-lock-keyword-face))))
+
+(ert-deftest sov-protobuf-registers-markdown-code-block-mode ()
+  (require 'markdown-ts-mode)
+  (should (equal (alist-get 'proto markdown-ts-code-block-modes)
+                 '(protobuf-ts-mode))))
+
+(ert-deftest sov-protobuf-fontifies-markdown-fenced-code-block ()
+  (skip-unless (and (>= emacs-major-version 31)
+                    (treesit-ready-p 'markdown t)
+                    (treesit-ready-p 'markdown-inline t)
+                    (treesit-ready-p 'proto t)))
+  (require 'markdown-ts-mode)
+  (with-temp-buffer
+    (insert "```proto\nmessage User { string name = 1; }\n```\n")
+    (markdown-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "message")
+    (should (eq (markdown-ts-code-block-language-at) 'proto))
+    (should (eq (markdown-ts-code-block-mode-at) 'protobuf-ts-mode))
+    (should (eq (get-text-property (1- (point)) 'face)
+                'font-lock-keyword-face))))
 
 (ert-deftest sov-treesit-clear-removes-only-managed-grammar-libraries ()
   (let ((directory (make-temp-file "sov-treesit-test-" t)))
