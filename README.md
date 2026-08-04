@@ -312,9 +312,26 @@ does not change the whitespace-delimited `W`, `B`, and `E` motions.
 
 Emacs 31 and later use the built-in `markdown-ts-mode`; Emacs 30 uses
 `markdown-mode` directly, without an external Tree-sitter Markdown package.
-The native mode hides markup, renders task boxes as `☑` and `☐`, uses `` for
-folded headings, and scales heading levels from 1.50 down to 1.06 times the
-body-text size.
+The native mode keeps markup visible, renders task boxes as `☑` and `☐`, uses
+`` for folded headings, and scales heading levels from 1.50 down to 1.06 times
+the body-text size.  Native table auto-alignment is disabled so cell navigation
+does not rewrite the padding required by `valign`.
+
+> [!NOTE]
+> **`valign` table format**
+>
+> `valign` accepts a stricter subset of valid GFM pipe tables.  Header and body
+> cells must not touch both surrounding pipes; use one padding space on each
+> side of their content.  Delimiter cells have the opposite requirement: `-`
+> or `:` must immediately follow the opening pipe, so write `|---|` rather than
+> `| --- |`.
+>
+> ```markdown
+> | Header | Header |
+> |---|---|
+> | Content | Content |
+> ```
+
 These bindings apply to both modes.
 
 | Key | State | Command | Purpose |
