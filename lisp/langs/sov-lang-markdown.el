@@ -383,7 +383,10 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
   (setq markdown-ts-ellipsis " "
         markdown-ts-checked-checkbox '("☑" . "+")
         markdown-ts-unchecked-checkbox '("☐" . "-")
-        markdown-ts-fontify-code-blocks-natively t)
+        markdown-ts-fontify-code-blocks-natively t
+        ;; Keep TAB/Shift-TAB cell navigation without letting the native
+        ;; formatter remove the padding spaces required by `valign'.
+        markdown-ts-table-auto-align nil)
   ;; Keep every heading larger than body text while preserving a clear visual
   ;; hierarchy.  `markdown-ts-setext-heading' inherits the level-one face.
   (dolist (face-height '((markdown-ts-heading-1 . 1.50)

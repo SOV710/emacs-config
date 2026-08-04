@@ -68,6 +68,7 @@
   (should (equal markdown-ts-ellipsis " "))
   (should (equal markdown-ts-checked-checkbox '("☑" . "+")))
   (should (equal markdown-ts-unchecked-checkbox '("☐" . "-")))
+  (should-not markdown-ts-table-auto-align)
   (dolist (face-height '((markdown-ts-heading-1 . 1.50)
                          (markdown-ts-heading-2 . 1.35)
                          (markdown-ts-heading-3 . 1.25)
@@ -76,6 +77,24 @@
                          (markdown-ts-heading-6 . 1.06)))
     (should (equal (face-attribute (car face-height) :height nil)
                    (cdr face-height)))))
+
+(ert-deftest sov-markdown-native-table-navigation-preserves-valign-padding ()
+  "Keep valign-compatible spaces when navigating native Markdown tables."
+  (skip-unless (and (>= emacs-major-version 31)
+                    (treesit-ready-p 'markdown t)
+                    (treesit-ready-p 'markdown-inline t)))
+  (let ((table (concat "| Name | Responsibility |\n"
+                       "| --- | --- |\n"
+                       "| `Example` | 处理一项任务 |\n")))
+    (with-temp-buffer
+      (insert table)
+      (let ((markdown-ts-mode-hook nil))
+        (markdown-ts-mode))
+      (goto-char (point-min))
+      (search-forward "Name")
+      (markdown-ts-in-table-mode 1)
+      (markdown-ts-table-next-cell)
+      (should (equal (buffer-string) table)))))
 
 (ert-deftest sov-markdown-table-projection-writer-defers-without-markers ()
   (sov-lang-markdown-test--with-buffer sov-lang-markdown-test--table
