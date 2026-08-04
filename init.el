@@ -118,7 +118,7 @@
 ;; Set the default font family and size.  These constants are used by the
 ;; helper below and are kept in one place so they are easy to change.
 (defconst sov-default-font-family "Smile Nerd Font Mono")
-(defconst sov-default-font-height 120)
+(defconst sov-default-font-height 180)
 
 (defun sov-apply-font (&optional frame)
   "Apply the configured font to FRAME.
