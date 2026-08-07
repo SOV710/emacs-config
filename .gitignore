@@ -19,6 +19,7 @@
 
 # Runtime state
 /auto-save-list/
+/dirvish/
 /history
 /places
 /recentf
