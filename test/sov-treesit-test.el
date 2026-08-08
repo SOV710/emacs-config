@@ -29,6 +29,7 @@
         sov-lang-go
         sov-lang-haskell
         sov-lang-html
+        sov-lang-java
         sov-lang-json
         sov-lang-kdl
         sov-lang-latex
@@ -51,13 +52,13 @@
 
 (defconst sov-treesit-test--groups
   '(assembly astro bash c clojure cmake css csv dart dockerfile emacs-lisp
-             fish ghostty go haskell html json kdl latex lua makefile markdown
+             fish ghostty go haskell html java json kdl latex lua makefile markdown
              powershell protobuf python qml racket rust sql task toml typescript
              typst vue yaml))
 
 (defconst sov-treesit-test--grammars
   '(asm astro bash c clojure cmake css csv dart dockerfile elisp fish ghostty
-        go haskell html javascript jsdoc json kdl latex lua make markdown
+        go haskell html java javascript jsdoc json kdl latex lua make markdown
         markdown-inline powershell proto python qmljs racket rust sql
         taskwarrior toml tsx typescript typst vue yaml))
 
@@ -111,6 +112,8 @@
               'sov-treesit-tsx-mode))
   (should (eq (cdr (assoc "\\.\\(?:[cm]?js\\|jsx\\)\\'" auto-mode-alist))
               'sov-treesit-javascript-mode))
+  (should (eq (cdr (assoc "\\.java\\'" auto-mode-alist))
+              'sov-treesit-java-mode))
   (should (eq (cdr (assoc "\\.astro\\'" auto-mode-alist))
               'sov-treesit-astro-mode)))
 

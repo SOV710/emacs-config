@@ -165,6 +165,7 @@ If FRAME is omitted, apply the font to the currently selected frame."
 (require 'sov-lang-go)
 (require 'sov-lang-haskell)
 (require 'sov-lang-html)
+(require 'sov-lang-java)
 (require 'sov-lang-json)
 (require 'sov-lang-kdl)
 (require 'sov-lang-latex)
