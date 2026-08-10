@@ -41,5 +41,10 @@
   :custom
   (valign-fancy-bar nil))
 
+;; Emacs 31 PGTK can misrender valign's absolute separator-row stretch
+;; overlays.  Keep valign's measurement and cell alignment while replacing
+;; only that renderer with a reversible local-width compatibility advice.
+(require 'sov-valign)
+
 (provide 'sov-lang-org)
 ;;; sov-lang-org.el ends here
