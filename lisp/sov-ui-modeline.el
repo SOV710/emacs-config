@@ -20,6 +20,10 @@
 (declare-function nerd-icons-flicon "nerd-icons" (icon-name &rest args))
 (declare-function nerd-icons-mdicon "nerd-icons" (icon-name &rest args))
 (declare-function nerd-icons-powerline "nerd-icons" (icon-name &rest args))
+(declare-function diff-hl--update-overlays "diff-hl" (changes reuse))
+(declare-function diff-hl-diff-buffer-with-reference
+                  "diff-hl" (file &optional dest-buffer backend context-lines))
+(declare-function diff-hl-remove-overlays "diff-hl" (&optional beg end))
 
 
 ;;; State faces
@@ -221,14 +225,30 @@ active conditions are included."
 
 (defvar-local sov-ui--diff-hunks '(0 0 0)
   "Cached diff hunk counts for the current buffer.
-Updated via `sov-ui--cache-diff-hunks' whenever `diff-hl-changes' runs.")
+Updated after `diff-hl' adds or removes its hunk overlays.")
 
-(defun sov-ui--cache-diff-hunks (changes)
-  "Cache diff hunk counts from CHANGES and refresh the mode line.
-Return CHANGES unchanged so the advice behaves transparently."
-  (setq sov-ui--diff-hunks (sov-ui--count-diff-hunks changes))
+(defun sov-ui--refresh-diff-hunks (&rest _)
+  "Refresh cached hunk counts from the current buffer's `diff-hl' overlays.
+The arguments are ignored so this function can run as `:after' advice for
+both overlay creation and removal.  Reading the completed overlays keeps the
+counter compatible with asynchronous `diff-hl' updates, whose initial result
+contains diff buffers rather than parsed hunk lists."
+  (let (changes)
+    (dolist (overlay (overlays-in (point-min) (point-max)))
+      (when (overlay-get overlay 'diff-hl-hunk)
+        (push (list nil nil (overlay-get overlay 'diff-hl-hunk-type))
+              changes)))
+    (setq sov-ui--diff-hunks (sov-ui--count-diff-hunks changes)))
   (force-mode-line-update)
-  changes)
+  nil)
+
+(defun sov-ui--diff-hl-with-pipe-process (function &rest arguments)
+  "Call FUNCTION with ARGUMENTS using pipes for asynchronous subprocesses.
+GNU diff 3.12 emits ANSI colors when its output is attached to a pseudo-TTY,
+but `diff-hl' expects plain unified diff output.  This scoped binding affects
+only the diff process used for live buffer comparisons."
+  (let ((process-connection-type nil))
+    (apply function arguments)))
 
 (use-package diff-hl
   :ensure t
@@ -236,10 +256,16 @@ Return CHANGES unchanged so the advice behaves transparently."
   (setq diff-hl-disable-on-remote t
         diff-hl-update-async t)
   :config
-  (unless (advice-member-p #'sov-ui--cache-diff-hunks
-                           #'diff-hl-changes)
-    (advice-add #'diff-hl-changes :filter-return
-                #'sov-ui--cache-diff-hunks))
+  ;; Remove the obsolete advice when this module is re-evaluated in a running
+  ;; session; on a fresh startup there is nothing to remove.
+  (advice-remove #'diff-hl-changes #'sov-ui--cache-diff-hunks)
+  (dolist (function '(diff-hl--update-overlays diff-hl-remove-overlays))
+    (unless (advice-member-p #'sov-ui--refresh-diff-hunks function)
+      (advice-add function :after #'sov-ui--refresh-diff-hunks)))
+  (unless (advice-member-p #'sov-ui--diff-hl-with-pipe-process
+                           #'diff-hl-diff-buffer-with-reference)
+    (advice-add #'diff-hl-diff-buffer-with-reference :around
+                #'sov-ui--diff-hl-with-pipe-process))
   (global-diff-hl-mode 1)
   (diff-hl-flydiff-mode 1))
 

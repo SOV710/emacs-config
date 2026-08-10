@@ -110,12 +110,41 @@ fall back to the Normal face."
 
 ;;; Diff-hl caching
 
-(ert-deftest sov-ui-test-cache-diff-hunks-preserves-return-value ()
-  "Verify that the diff-hl advice returns the original changes unchanged."
+(ert-deftest sov-ui-test-refresh-diff-hunks-from-overlays ()
+  "Verify that diff hunk counts are read from completed overlays."
   (with-temp-buffer
-    (let ((changes '((1 1 insert) (4 2 change) (9 1 delete))))
-      (should (eq (sov-ui--cache-diff-hunks changes) changes))
-      (should (equal sov-ui--diff-hunks '(1 1 1))))))
+    (insert "one\ntwo\nthree\n")
+    (let ((insert (make-overlay 1 4))
+          (change (make-overlay 5 8))
+          (delete (make-overlay 9 14))
+          (irrelevant (make-overlay 1 2)))
+      (dolist (entry `((,insert . insert)
+                       (,change . change)
+                       (,delete . delete)))
+        (overlay-put (car entry) 'diff-hl-hunk t)
+        (overlay-put (car entry) 'diff-hl-hunk-type (cdr entry)))
+      (overlay-put irrelevant 'diff-hl-hunk-type 'insert)
+      (sov-ui--refresh-diff-hunks)
+      (should (equal sov-ui--diff-hunks '(1 1 1)))
+      (delete-overlay change)
+      (sov-ui--refresh-diff-hunks)
+      (should (equal sov-ui--diff-hunks '(1 0 1))))))
+
+(ert-deftest sov-ui-test-refresh-diff-hunks-ignores-async-result ()
+  "Ensure an unresolved async diff result is never treated as a hunk list."
+  (with-temp-buffer
+    (setq sov-ui--diff-hunks '(1 1 1))
+    (should-not
+     (sov-ui--refresh-diff-hunks
+      `((:working . ,(current-buffer)))))
+    (should (equal sov-ui--diff-hunks '(0 0 0)))))
+
+(ert-deftest sov-ui-test-diff-hl-live-diff-uses-a-pipe ()
+  "Ensure live diff subprocesses cannot emit terminal color escapes."
+  (let ((process-connection-type t))
+    (should-not
+     (sov-ui--diff-hl-with-pipe-process
+      (lambda () process-connection-type)))))
 
 
 ;;; Face color helpers
