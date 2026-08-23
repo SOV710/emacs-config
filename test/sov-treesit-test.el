@@ -36,6 +36,7 @@
         sov-lang-lua
         sov-lang-makefile
         sov-lang-markdown
+        sov-lang-nix
         sov-lang-powershell
         sov-lang-protobuf
         sov-lang-python
@@ -53,13 +54,13 @@
 (defconst sov-treesit-test--groups
   '(assembly astro bash c clojure cmake css csv dart dockerfile emacs-lisp
              fish ghostty go haskell html java json kdl latex lua makefile markdown
-             powershell protobuf python qml racket rust sql task toml typescript
+             nix powershell protobuf python qml racket rust sql task toml typescript
              typst vue yaml))
 
 (defconst sov-treesit-test--grammars
   '(asm astro bash c clojure cmake css csv dart dockerfile elisp fish ghostty
         go haskell html java javascript jsdoc json kdl latex lua make markdown
-        markdown-inline powershell proto python qmljs racket rust sql
+        markdown-inline nix powershell proto python qmljs racket rust sql
         taskwarrior toml tsx typescript typst vue yaml))
 
 (ert-deftest sov-treesit-registers-every-configured-language-group ()
@@ -114,8 +115,45 @@
               'sov-treesit-javascript-mode))
   (should (eq (cdr (assoc "\\.java\\'" auto-mode-alist))
               'sov-treesit-java-mode))
+  (should (eq (cdr (assoc "\\.fish\\'" auto-mode-alist))
+              'sov-treesit-fish-mode))
+  (should (eq (cdr (assoc "\\.nix\\'" auto-mode-alist))
+              'sov-treesit-nix-mode))
   (should (eq (cdr (assoc "\\.astro\\'" auto-mode-alist))
               'sov-treesit-astro-mode)))
+
+(ert-deftest sov-fish-tree-sitter-mode-provides-font-lock ()
+  (skip-unless (treesit-ready-p 'fish t))
+  (with-temp-buffer
+    (insert "set TID 'your-thread-id'\n")
+    (fish-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (should (eq (get-text-property (point) 'face)
+                'font-lock-function-call-face))
+    (search-forward "your-thread-id")
+    (should (eq (get-text-property (1- (point)) 'face)
+                'font-lock-string-face))))
+
+(ert-deftest sov-fish-fontifies-markdown-fenced-code-block ()
+  (skip-unless (and (>= emacs-major-version 31)
+                    (treesit-ready-p 'markdown t)
+                    (treesit-ready-p 'markdown-inline t)
+                    (treesit-ready-p 'fish t)))
+  (require 'markdown-ts-mode)
+  (with-temp-buffer
+    (insert "```fish\nset TID 'your-thread-id'\n```\n")
+    (markdown-ts-mode)
+    (font-lock-ensure)
+    (goto-char (point-min))
+    (search-forward "set")
+    (should (eq (markdown-ts-code-block-language-at) 'fish))
+    (should (eq (markdown-ts-code-block-mode-at) 'fish-ts-mode))
+    (should (eq (get-text-property (1- (point)) 'face)
+                'font-lock-function-call-face))
+    (search-forward "your-thread-id")
+    (should (eq (get-text-property (1- (point)) 'face)
+                'font-lock-string-face))))
 
 (ert-deftest sov-treesit-falls-back-without-an-installed-grammar ()
   (cl-letf (((symbol-function 'treesit-ready-p)

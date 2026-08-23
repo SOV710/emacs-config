@@ -181,6 +181,7 @@ therefore omitted.
 | `markdown-mode` | Markdown | Edit and fontify conventional Markdown files. |
 | `markdown-table-wrap` | Markdown tables | Wrap and unwrap wide Markdown pipe tables. |
 | `math-preview` | Mathematics | Render LaTeX math as in-buffer MathJax SVG previews. |
+| `nix-ts-mode` | Nix | Edit and fontify Nix expressions with native Tree-sitter. |
 
 
 ## Tree-sitter

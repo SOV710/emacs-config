@@ -171,6 +171,7 @@ If FRAME is omitted, apply the font to the currently selected frame."
 (require 'sov-lang-latex)
 (require 'sov-lang-lua)
 (require 'sov-lang-makefile)
+(require 'sov-lang-nix)
 (require 'sov-lang-powershell)
 (require 'sov-lang-protobuf)
 (require 'sov-lang-python)
