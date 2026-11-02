@@ -306,6 +306,35 @@ Return a cons of the resulting `buffer-backed-up' value and SETMODES data."
       (markdown-ts-mode)
     (markdown-mode)))
 
+(with-eval-after-load 'evil
+  (evil-define-command sov-markdown-next-heading-center (count)
+    "Move forward COUNT same-level headings, then center the current line."
+    :repeat nil
+    (interactive "<c>")
+    (outline-forward-same-level (or count 1))
+    ;; `zz' calls this command.  Its count is a line number, so do not
+    ;; forward the heading count to it.
+    (evil-scroll-line-to-center nil))
+
+  (evil-define-command sov-markdown-previous-heading-center (count)
+    "Move backward COUNT same-level headings, then center the current line."
+    :repeat nil
+    (interactive "<c>")
+    (outline-backward-same-level (or count 1))
+    (evil-scroll-line-to-center nil))
+
+  (defun sov-markdown-setup-heading-navigation ()
+    "Bind centered heading jumps in the current Markdown buffer."
+    ;; Evil's local state map takes precedence over Outline minor mode's
+    ;; state map; a major-mode binding alone would be shadowed by it.
+    (evil-local-set-key 'normal (kbd "C-j")
+                        #'sov-markdown-next-heading-center)
+    (evil-local-set-key 'normal (kbd "C-k")
+                        #'sov-markdown-previous-heading-center))
+
+  (add-hook 'markdown-mode-hook #'sov-markdown-setup-heading-navigation)
+  (add-hook 'markdown-ts-mode-hook #'sov-markdown-setup-heading-navigation))
+
 (defun sov-lang-markdown--protect-code-blocks-from-fill ()
   "Prevent `auto-fill-mode' from wrapping fenced code blocks."
   (add-hook 'fill-nobreak-predicate
