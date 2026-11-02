@@ -338,6 +338,8 @@ These bindings apply to both modes.
 | Key | State | Command | Purpose |
 | --- | --- | --- | --- |
 | `C-c y` | Normal, Insert | `sov-markdown-paste-image` | Save a clipboard image as an external file, insert a relative link, and render it immediately. |
+| `+` / `-` | Normal, on an image | `sov-markdown-image-increase-size` / `sov-markdown-image-decrease-size` | Enlarge by ×1.1 or shrink by ÷1.1. Elsewhere, keep Evil's usual line motions. |
+| `SPC i f` | Normal | `sov-markdown-fit-images` | Fit all local images once to the current window; `i` = image, `f` = fit. |
 | `<leader>ma` | Normal, Visual | `math-preview-all` | Render every math expression in the buffer. |
 | `<leader>mr` | Normal | `math-preview-at-point` | Render the math expression at point. |
 | `<leader>mr` | Visual | `math-preview-region` | Render math expressions in the selected region. |
@@ -368,8 +370,25 @@ Both Markdown modes use `markdown-mode`'s inline image renderer, including
 when reopening notes.  `sov-markdown-image-directory` sets the image directory
 relative to the project root (or the note's directory outside a project),
 `sov-markdown-image-name-format` sets automatic names, and
-`sov-markdown-image-scale` defaults to `1.0` (100%).  After changing preview
-settings, run `M-x sov-markdown-refresh-images` to refresh the current note.
+`sov-markdown-image-scale` defaults to `1.0` (100%).  Newly inserted images fit
+once within the current window's available width and half its editing-area
+height, preserving proportions.  Small images retain their original size.
+Inserting another image preserves existing previews and their manual zoom.
+
+Image sizing is manual: resizing or splitting windows never adjusts previews
+and no image resize hooks or timers are installed.  In Normal state, put point
+on an image and press `+` or `-` to change its current displayed size immediately.
+`sov-markdown-image-zoom-factor` defaults to `1.1`; manual zoom can exceed the
+initial fit.  `SPC i f` resets manual zoom and fits every local image to the
+current window once.  Other windows showing the same buffer share that size.
+
+Opening a note, or running `M-x sov-markdown-refresh-images`, fits images once
+to the available width and half the current window's editing-area height.
+After that, window changes never resize them automatically.  Fitting computes
+one numeric scale; manual zoom adjusts that scale and releases the previous
+decoded image variant so repeated zooming does not accumulate cached copies.
+All size changes affect previews only and last for the current buffer session;
+image files and Markdown links retain their original contents.
 
 ### Command Remaps
 

@@ -15,11 +15,13 @@
 (declare-function markdown-code-block-at-point-p "markdown-mode" ())
 (declare-function markdown-insert-inline-image "markdown-mode" (text url &optional title))
 (declare-function markdown-display-inline-images "markdown-mode" ())
-(declare-function markdown-remove-inline-images "markdown-mode" ())
 (declare-function projectile-project-root "projectile" (&optional dir))
+(declare-function evil-next-line-first-non-blank "evil-commands" (count))
+(declare-function evil-previous-line-first-non-blank "evil-commands" (count))
 
 (defvar markdown-inline-image-overlays)
 (defvar markdown-display-remote-images)
+(defvar markdown-max-image-size)
 
 ;;; Clipboard images
 
@@ -39,22 +41,140 @@ When the Markdown file is outside a project, use its containing directory."
   :group 'sov-markdown-images)
 
 (defcustom sov-markdown-image-scale 1.0
-  "Scale of Markdown image previews; 1.0 means 100 percent."
+  "Preferred image scale before fitting previews to the available area.
+The default 1.0 keeps small images at their original size."
   :type 'number
   :group 'sov-markdown-images)
 
-(defun sov-markdown-refresh-images ()
-  "Refresh local image previews using `markdown-mode' in either major mode."
+(defcustom sov-markdown-image-zoom-factor 1.1
+  "Factor used by manual image enlargement; shrinking uses its reciprocal."
+  :type 'number
+  :group 'sov-markdown-images)
+
+(defun sov-markdown--image-window-limits ()
+  "Snapshot the selected window's usable width, half-height, and font width."
+  (let* ((window (selected-window))
+         (character-width (window-font-width window)))
+    (list (max 1 (floor (- (window-body-width window t)
+                           (if display-line-numbers
+                               (line-number-display-width t)
+                             0)
+                           character-width)))
+          (max 1 (floor (/ (window-body-height window t) 2)))
+          character-width)))
+
+(defun sov-markdown--unscaled-image (image)
+  "Return a copy of IMAGE with only its original dimensions and scale 1."
+  (let ((original (copy-tree image)))
+    (dolist (property '(:width :height :max-width :max-height))
+      (setf (image-property original property) nil))
+    (setf (image-property original :scale) 1.0)
+    original))
+
+(defun sov-markdown--image-native-size (overlay)
+  "Return and cache the original pixel dimensions of OVERLAY's image."
+  (or (overlay-get overlay 'sov-markdown-image-native-size)
+      (let* ((displayed (overlay-get overlay 'display))
+             (original (sov-markdown--unscaled-image displayed)))
+        (unwind-protect
+            (let ((size (image-size original t)))
+              (unless (and (> (car size) 0) (> (cdr size) 0))
+                (user-error "Cannot determine image dimensions"))
+              (overlay-put overlay 'sov-markdown-image-native-size size)
+              size)
+          ;; Measuring a fitted image may load an extra full-resolution copy.
+          ;; Keep its dimensions in Lisp, not its decoded pixels in the cache.
+          (unless (equal original displayed)
+            (image-flush original t))))))
+
+(defun sov-markdown--set-image-scale (overlay scale)
+  "Set OVERLAY to SCALE, releasing its previous decoded image variant."
+  (let* ((previous (overlay-get overlay 'display))
+         (image (sov-markdown--unscaled-image previous)))
+    (setf (image-property image :scale) scale)
+    (unless (equal previous image)
+      ;; Each scale is a separate decoded cache entry.  Native Emacs image
+      ;; zoom commands also flush the old entry before replacing it.
+      (image-flush previous t)
+      (overlay-put overlay 'display image))
+    (overlay-put overlay 'evaporate t)))
+
+(defun sov-markdown--fit-image (overlay limits)
+  "Fit OVERLAY once to the selected window snapshot LIMITS."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (overlay-start overlay))
+      (let* ((size (sov-markdown--image-native-size overlay))
+             (width (max 1 (- (car limits)
+                              (* (current-indentation) (caddr limits)))))
+             (scale (min sov-markdown-image-scale
+                         (/ (float width) (car size))
+                         (/ (float (cadr limits)) (cdr size)))))
+        (sov-markdown--set-image-scale overlay scale)))))
+
+(defun sov-markdown--image-at-point ()
+  "Return the local Markdown image overlay containing point, if any."
+  (cl-find-if
+   (lambda (overlay)
+     (and (eq (overlay-buffer overlay) (current-buffer))
+          (<= (overlay-start overlay) (point))
+          (< (point) (overlay-end overlay))))
+   (bound-and-true-p markdown-inline-image-overlays)))
+
+(defun sov-markdown--zoom-image (overlay factor)
+  "Multiply the current displayed size of OVERLAY by FACTOR immediately."
+  (let* ((size (sov-markdown--image-native-size overlay))
+         (image (overlay-get overlay 'display))
+         (scale (image-property image :scale))
+         (current (if (numberp scale) scale (image-compute-scaling-factor scale)))
+         (minimum (/ 1.0 (min (car size) (cdr size)))))
+    ;; Stop at one pixel on the short edge instead of creating endless cache
+    ;; entries whose distinct scales all render the same one-pixel image.
+    (sov-markdown--set-image-scale overlay (max minimum (* current factor)))))
+
+(defun sov-markdown-image-increase-size ()
+  "Enlarge the image under point, or use Evil's usual + motion elsewhere."
   (interactive)
+  (if-let* ((overlay (sov-markdown--image-at-point)))
+      (sov-markdown--zoom-image overlay sov-markdown-image-zoom-factor)
+    (call-interactively #'evil-next-line-first-non-blank)))
+
+(defun sov-markdown-image-decrease-size ()
+  "Shrink the image under point, or use Evil's usual - motion elsewhere."
+  (interactive)
+  (if-let* ((overlay (sov-markdown--image-at-point)))
+      (sov-markdown--zoom-image overlay (/ 1.0 sov-markdown-image-zoom-factor))
+    (call-interactively #'evil-previous-line-first-non-blank)))
+
+(defun sov-markdown--render-images ()
+  "Create local image overlays before applying a one-shot fit."
   (when (display-images-p)
     (require 'markdown-mode)
     (let ((image-scaling-factor sov-markdown-image-scale)
-          (markdown-display-remote-images nil))
-      (markdown-remove-inline-images)
+          (markdown-display-remote-images nil)
+          (markdown-max-image-size nil))
+      (dolist (overlay markdown-inline-image-overlays)
+        (when (overlay-buffer overlay)
+          (image-flush (overlay-get overlay 'display) t))
+        (delete-overlay overlay))
+      (setq markdown-inline-image-overlays nil)
       (markdown-display-inline-images))
-    ;; Removing or undoing a link must also remove its image.
     (dolist (overlay markdown-inline-image-overlays)
       (overlay-put overlay 'evaporate t))))
+
+(defun sov-markdown-fit-images ()
+  "Fit every local image once to the current window, resetting manual zoom."
+  (interactive)
+  (unless (display-images-p)
+    (user-error "Image fitting requires a graphical window"))
+  (let ((limits (sov-markdown--image-window-limits)))
+    (sov-markdown--render-images)
+    (dolist (overlay markdown-inline-image-overlays)
+      (sov-markdown--fit-image overlay limits))))
+
+(defalias 'sov-markdown-refresh-images #'sov-markdown-fit-images
+  "Render local images and fit them once to the current window.")
 
 (defun sov-markdown--yank-image (_mimetype data)
   "Save clipboard image DATA and insert a relative Markdown image link.
@@ -87,11 +207,19 @@ Emacs's image library detects the binary format and supplies the extension."
       (write-region data nil file nil 'silent nil 'excl))
     ;; Escape Markdown/URL punctuation while keeping Unicode names readable.
     ;; markdown-mode's renderer decodes these escapes before opening the file.
-    (markdown-insert-inline-image
-     "" (replace-regexp-in-string
-         (rx (any " \t()[]%?#<>\"")) #'url-hexify-string
-         (file-relative-name file default-directory) t t))
-    (sov-markdown-refresh-images)))
+    (let ((start (point)))
+      (markdown-insert-inline-image
+       "" (replace-regexp-in-string
+           (rx (any " \t()[]%?#<>\"")) #'url-hexify-string
+           (file-relative-name file default-directory) t t))
+      ;; Render only the new link.  Other previews keep their manual sizes.
+      (when (display-images-p)
+        (when-let* ((image (create-image file nil nil :scale sov-markdown-image-scale)))
+          (let ((overlay (make-overlay start (point))))
+            (overlay-put overlay 'display image)
+            (overlay-put overlay 'face 'default)
+            (push overlay markdown-inline-image-overlays)
+            (sov-markdown--fit-image overlay (sov-markdown--image-window-limits))))))))
 
 (defun sov-markdown-paste-image ()
   "Paste a clipboard image as an external file and preview it immediately."
@@ -107,17 +235,25 @@ Emacs's image library detects the binary format and supplies the extension."
                  (list (lambda (types) types)))))
     (yank-media)))
 
+(defun sov-markdown-image-setup-keys ()
+  "Bind image insertion, manual zoom, and one-shot fitting in this buffer."
+  (local-set-key (kbd "C-c y") #'sov-markdown-paste-image)
+  (when (featurep 'evil)
+    (dolist (state '(normal insert))
+      (evil-local-set-key state (kbd "C-c y") #'sov-markdown-paste-image))
+    (evil-local-set-key 'normal (kbd "+") #'sov-markdown-image-increase-size)
+    (evil-local-set-key 'normal (kbd "-") #'sov-markdown-image-decrease-size)
+    (evil-local-set-key 'normal (kbd "<leader>if") #'sov-markdown-fit-images)))
+
 (defun sov-markdown-image-setup ()
   "Set up clipboard image insertion and existing image previews."
   ;; Share markdown-mode's renderer across Emacs 30 and 31.  Do not create
   ;; a second set of previews with markdown-ts-mode's native renderer.
   (when (derived-mode-p 'markdown-ts-mode)
     (setq-local markdown-ts-inline-images nil))
-  (local-set-key (kbd "C-c y") #'sov-markdown-paste-image)
-  (when (featurep 'evil)
-    (dolist (state '(normal insert))
-      (evil-local-set-key state (kbd "C-c y") #'sov-markdown-paste-image)))
-  (sov-markdown-refresh-images))
+  (sov-markdown-image-setup-keys)
+  (when (display-images-p)
+    (sov-markdown-fit-images)))
 
 (add-hook 'markdown-mode-hook #'sov-markdown-image-setup)
 (add-hook 'markdown-ts-mode-hook #'sov-markdown-image-setup)
