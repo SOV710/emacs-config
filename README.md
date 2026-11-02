@@ -337,6 +337,7 @@ These bindings apply to both modes.
 
 | Key | State | Command | Purpose |
 | --- | --- | --- | --- |
+| `C-c y` | Normal, Insert | `sov-markdown-paste-image` | Save a clipboard image as an external file, insert a relative link, and render it immediately. |
 | `<leader>ma` | Normal, Visual | `math-preview-all` | Render every math expression in the buffer. |
 | `<leader>mr` | Normal | `math-preview-at-point` | Render the math expression at point. |
 | `<leader>mr` | Visual | `math-preview-region` | Render math expressions in the selected region. |
@@ -346,6 +347,29 @@ These bindings apply to both modes.
 | `<localleader>tw` | Normal | `sov-markdown-table-wrap-at-point` | Wrap the pipe table at point to the current window width. |
 | `<localleader>tu` | Normal | `sov-markdown-table-unwrap-at-point` | Unwrap the marked pipe table at point. |
 | `<localleader>tU` | Normal | `sov-markdown-table-unwrap-buffer` | Unwrap every marked pipe table in the buffer. |
+
+Save the Markdown note to a local file first, copy image data (for example,
+a screenshot or a browser's **Copy Image**), then press `C-c y` in graphical
+Emacs.  Enter an image name without its extension, or press Enter with an
+empty answer to use `%Y%m%d-%H%M%S-%6N` (date, time, and microseconds).
+Emacs's built-in `image-type-from-data` detects the binary format; no image
+signature table is maintained in this configuration.
+
+Images are written immediately to `<project>/assets/`, using Projectile to
+identify the note's project root.  Outside a project, use `assets/` beside the
+note instead.  The directory is created if needed.  Links remain relative to
+the note: a note at `<project>/docs/note.md` links to
+`![](../assets/diagram.png)` when the entered name is `diagram` and the image
+is PNG.  Existing files are never overwritten.  Save the
+Markdown buffer normally to persist the link.  Copying a file path or an image
+URL is different from copying image data; this binding expects image data.
+
+Both Markdown modes use `markdown-mode`'s inline image renderer, including
+when reopening notes.  `sov-markdown-image-directory` sets the image directory
+relative to the project root (or the note's directory outside a project),
+`sov-markdown-image-name-format` sets automatic names, and
+`sov-markdown-image-scale` defaults to `1.0` (100%).  After changing preview
+settings, run `M-x sov-markdown-refresh-images` to refresh the current note.
 
 ### Command Remaps
 

@@ -3,6 +3,9 @@
 (require 'cl-lib)
 (require 'subr-x)
 (require 'sov-treesit)
+(require 'image)
+(require 'yank-media)
+(require 'url-util)
 
 (declare-function markdown-table-wrap "markdown-table-wrap"
                   (text width &optional max-cell-height strip-markup compact))
@@ -10,6 +13,114 @@
                   "markdown-table-wrap" (pos))
 (declare-function markdown-table-wrap-unwrap "markdown-table-wrap" (text))
 (declare-function markdown-code-block-at-point-p "markdown-mode" ())
+(declare-function markdown-insert-inline-image "markdown-mode" (text url &optional title))
+(declare-function markdown-display-inline-images "markdown-mode" ())
+(declare-function markdown-remove-inline-images "markdown-mode" ())
+(declare-function projectile-project-root "projectile" (&optional dir))
+
+(defvar markdown-inline-image-overlays)
+(defvar markdown-display-remote-images)
+
+;;; Clipboard images
+
+(defgroup sov-markdown-images nil
+  "External image files and inline previews in Markdown buffers."
+  :group 'text)
+
+(defcustom sov-markdown-image-directory "assets/"
+  "Image directory relative to the Projectile root, or the Markdown file.
+When the Markdown file is outside a project, use its containing directory."
+  :type 'string
+  :group 'sov-markdown-images)
+
+(defcustom sov-markdown-image-name-format "%Y%m%d-%H%M%S-%6N"
+  "Time format used when the image name is left empty."
+  :type 'string
+  :group 'sov-markdown-images)
+
+(defcustom sov-markdown-image-scale 1.0
+  "Scale of Markdown image previews; 1.0 means 100 percent."
+  :type 'number
+  :group 'sov-markdown-images)
+
+(defun sov-markdown-refresh-images ()
+  "Refresh local image previews using `markdown-mode' in either major mode."
+  (interactive)
+  (when (display-images-p)
+    (require 'markdown-mode)
+    (let ((image-scaling-factor sov-markdown-image-scale)
+          (markdown-display-remote-images nil))
+      (markdown-remove-inline-images)
+      (markdown-display-inline-images))
+    ;; Removing or undoing a link must also remove its image.
+    (dolist (overlay markdown-inline-image-overlays)
+      (overlay-put overlay 'evaporate t))))
+
+(defun sov-markdown--yank-image (_mimetype data)
+  "Save clipboard image DATA and insert a relative Markdown image link.
+Emacs's image library detects the binary format and supplies the extension."
+  (barf-if-buffer-read-only)
+  (unless (and buffer-file-name (not (file-remote-p buffer-file-name)))
+    (user-error "Save the Markdown buffer to a local file first"))
+  (require 'markdown-mode)
+  (require 'projectile)
+  (let* ((type (or (image-type-from-data data)
+                   (user-error "Emacs could not identify the clipboard image")))
+         (name (read-string "Image name (without extension; empty = timestamp): "))
+         (name (if (string-empty-p name)
+                   (format-time-string sov-markdown-image-name-format)
+                 name))
+         (default-directory (file-name-directory buffer-file-name))
+         (directory (expand-file-name
+                     sov-markdown-image-directory
+                     (or (projectile-project-root default-directory)
+                         default-directory)))
+         (filename (concat name "." (symbol-name type)))
+         (file (expand-file-name filename directory)))
+    (when (or (member name '("." ".."))
+              (string-match-p "[/\\\\\n\r<>]" name))
+      (user-error "Enter an image name, without a directory or angle brackets"))
+    (make-directory directory t)
+    ;; Exclusive creation avoids silently overwriting an existing attachment.
+    ;; Binary coding preserves every byte, independently of the .md encoding.
+    (let ((coding-system-for-write 'no-conversion))
+      (write-region data nil file nil 'silent nil 'excl))
+    ;; Escape Markdown/URL punctuation while keeping Unicode names readable.
+    ;; markdown-mode's renderer decodes these escapes before opening the file.
+    (markdown-insert-inline-image
+     "" (replace-regexp-in-string
+         (rx (any " \t()[]%?#<>\"")) #'url-hexify-string
+         (file-relative-name file default-directory) t t))
+    (sov-markdown-refresh-images)))
+
+(defun sov-markdown-paste-image ()
+  "Paste a clipboard image as an external file and preview it immediately."
+  (interactive)
+  (barf-if-buffer-read-only)
+  (unless (and buffer-file-name (not (file-remote-p buffer-file-name)))
+    (user-error "Save the Markdown buffer to a local file first"))
+  ;; Restrict this command to image data, even if another handler is installed.
+  (let ((yank-media--registered-handlers
+         '(("image/.*" . sov-markdown--yank-image)))
+        (yank-media-preferred-types
+         (append '(image/png image/jpeg)
+                 (list (lambda (types) types)))))
+    (yank-media)))
+
+(defun sov-markdown-image-setup ()
+  "Set up clipboard image insertion and existing image previews."
+  ;; Share markdown-mode's renderer across Emacs 30 and 31.  Do not create
+  ;; a second set of previews with markdown-ts-mode's native renderer.
+  (when (derived-mode-p 'markdown-ts-mode)
+    (setq-local markdown-ts-inline-images nil))
+  (local-set-key (kbd "C-c y") #'sov-markdown-paste-image)
+  (when (featurep 'evil)
+    (dolist (state '(normal insert))
+      (evil-local-set-key state (kbd "C-c y") #'sov-markdown-paste-image)))
+  (sov-markdown-refresh-images))
+
+(add-hook 'markdown-mode-hook #'sov-markdown-image-setup)
+(add-hook 'markdown-ts-mode-hook #'sov-markdown-image-setup)
 
 (defconst sov-markdown-table--start-marker-regexp
   "^<!-- sov-markdown-table-wrap width:\\([1-9][0-9]*\\) -->[ \t]*$")
