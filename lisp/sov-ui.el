@@ -4,6 +4,8 @@
 ;; line, current-line color that follows the Evil state, indent guides, color
 ;; previews, and jump pulsing.
 
+(require 'sov-redisplay)
+
 
 ;;; Color scheme and icons
 

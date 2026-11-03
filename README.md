@@ -384,11 +384,27 @@ current window once.  Other windows showing the same buffer share that size.
 
 Opening a note, or running `M-x sov-markdown-refresh-images`, fits images once
 to the available width and half the current window's editing-area height.
-After that, window changes never resize them automatically.  Fitting computes
-one numeric scale; manual zoom adjusts that scale and releases the previous
-decoded image variant so repeated zooming does not accumulate cached copies.
+After that, window changes never resize them automatically.  With ImageMagick's
+`magick` executable available, opening a note and manual sizing rasterize a PNG
+preview at the frame's pixel density.  Its binary data stays in memory; no
+preview files or ImageMagick disk pixel caches are created.  Each overlay keeps
+only its current preview, releasing the previous decoded variant on zoom and
+the current one when its link is deleted or the buffer is closed or changes
+major mode.  Link deletion uses the image overlay's own modification callback;
+ordinary edits do not scan the image list.  The original
+dimensions and logical zoom are retained separately, so zoom always resamples
+the original image.  `sov-markdown-image-preview-program` selects the converter;
+if unavailable or conversion fails, Emacs uses ordinary scaled image display.
 All size changes affect previews only and last for the current buffer session;
 image files and Markdown links retain their original contents.
+
+PGTK preedit updates reuse unchanged private face specs, including the empty
+default spec that PGTK otherwise resets on every input event.  This avoids
+full redisplays of unrelated images while typing with an external input method.
+Existing private faces also skip repeated identical declarations, preventing
+duplicate face records from accumulating in Emacs's `current-load-list`.
+Changed preedit colors/underlining, multiple segments, and face updates outside
+the preedit handler still use Emacs's original behavior.
 
 ### Command Remaps
 

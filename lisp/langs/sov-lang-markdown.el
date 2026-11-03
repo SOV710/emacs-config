@@ -51,6 +51,13 @@ The default 1.0 keeps small images at their original size."
   :type 'number
   :group 'sov-markdown-images)
 
+(defcustom sov-markdown-image-preview-program "magick"
+  "ImageMagick executable used to rasterize previews in memory.
+No preview files or disk pixel caches are created.  If unavailable, keep
+Emacs's ordinary image display.  The original image is never modified."
+  :type 'string
+  :group 'sov-markdown-images)
+
 (defun sov-markdown--image-window-limits ()
   "Snapshot the selected window's usable width, half-height, and font width."
   (let* ((window (selected-window))
@@ -71,11 +78,18 @@ The default 1.0 keeps small images at their original size."
     (setf (image-property original :scale) 1.0)
     original))
 
+(defun sov-markdown--image-source (overlay)
+  "Return OVERLAY's original image descriptor, independent of its preview."
+  (or (overlay-get overlay 'sov-markdown-image-source)
+      (let ((source (sov-markdown--unscaled-image (overlay-get overlay 'display))))
+        (overlay-put overlay 'sov-markdown-image-source source)
+        source)))
+
 (defun sov-markdown--image-native-size (overlay)
   "Return and cache the original pixel dimensions of OVERLAY's image."
   (or (overlay-get overlay 'sov-markdown-image-native-size)
       (let* ((displayed (overlay-get overlay 'display))
-             (original (sov-markdown--unscaled-image displayed)))
+             (original (sov-markdown--image-source overlay)))
         (unwind-protect
             (let ((size (image-size original t)))
               (unless (and (> (car size) 0) (> (cdr size) 0))
@@ -87,17 +101,52 @@ The default 1.0 keeps small images at their original size."
           (unless (equal original displayed)
             (image-flush original t))))))
 
+(defun sov-markdown--memory-image-preview (source width height density)
+  "Rasterize SOURCE to WIDTH by HEIGHT logical pixels at DENSITY.
+Return a PNG descriptor whose bytes stay in memory, or nil if conversion
+is unavailable.  DENSITY preserves detail on HiDPI frames."
+  (when-let* ((file (image-property source :file))
+              ((not (file-remote-p file)))
+              ((file-readable-p file))
+              (program (executable-find sov-markdown-image-preview-program)))
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (let* ((coding-system-for-read 'no-conversion)
+             (coding-system-for-write 'no-conversion)
+             ;; Read stdin so brackets and leading dashes in filenames are
+             ;; never interpreted as ImageMagick options or frame selectors.
+             (status (call-process
+                      program file '(t nil) nil
+                      "-limit" "map" "0" "-limit" "disk" "0"
+                      "-limit" "thread" "1" "-[0]" "-resize"
+                      (format "%dx%d!" (max 1 (round (* width density)))
+                              (max 1 (round (* height density))))
+                      "-strip" "png:-")))
+        (when (and (eq status 0) (> (buffer-size) 0))
+          (create-image (buffer-string) 'png t :scale (/ 1.0 density)))))))
+
 (defun sov-markdown--set-image-scale (overlay scale)
-  "Set OVERLAY to SCALE, releasing its previous decoded image variant."
+  "Set OVERLAY to SCALE, keeping one rasterized preview in memory."
   (let* ((previous (overlay-get overlay 'display))
-         (image (sov-markdown--unscaled-image previous)))
-    (setf (image-property image :scale) scale)
-    (unless (equal previous image)
-      ;; Each scale is a separate decoded cache entry.  Native Emacs image
-      ;; zoom commands also flush the old entry before replacing it.
-      (image-flush previous t)
-      (overlay-put overlay 'display image))
-    (overlay-put overlay 'evaporate t)))
+         (source (sov-markdown--image-source overlay))
+         (size (sov-markdown--image-native-size overlay))
+         (width (max 1 (round (* (car size) scale))))
+         (height (max 1 (round (* (cdr size) scale))))
+         (density (frame-scale-factor))
+         (key (list width height density)))
+    (unless (equal key (overlay-get overlay 'sov-markdown-image-preview-key))
+      (let ((image (or (sov-markdown--memory-image-preview source width height density)
+                       (let ((image (copy-tree source)))
+                         (setf (image-property image :scale) scale)
+                         image))))
+        (unless (equal previous image)
+          ;; Drop both Emacs's decoded cache entry and the overlay's old bytes.
+          ;; Never keep a history of previews for earlier zoom levels.
+          (image-flush previous t)
+          (overlay-put overlay 'display image))
+        (overlay-put overlay 'sov-markdown-image-preview-key key)))
+    (overlay-put overlay 'sov-markdown-image-scale scale)
+    (sov-markdown--watch-image-preview overlay)))
 
 (defun sov-markdown--fit-image (overlay limits)
   "Fit OVERLAY once to the selected window snapshot LIMITS."
@@ -126,7 +175,8 @@ The default 1.0 keeps small images at their original size."
   "Multiply the current displayed size of OVERLAY by FACTOR immediately."
   (let* ((size (sov-markdown--image-native-size overlay))
          (image (overlay-get overlay 'display))
-         (scale (image-property image :scale))
+         (scale (or (overlay-get overlay 'sov-markdown-image-scale)
+                    (image-property image :scale)))
          (current (if (numberp scale) scale (image-compute-scaling-factor scale)))
          (minimum (/ 1.0 (min (car size) (cdr size)))))
     ;; Stop at one pixel on the short edge instead of creating endless cache
@@ -147,6 +197,39 @@ The default 1.0 keeps small images at their original size."
       (sov-markdown--zoom-image overlay (/ 1.0 sov-markdown-image-zoom-factor))
     (call-interactively #'evil-previous-line-first-non-blank)))
 
+(defun sov-markdown--release-image-preview (overlay)
+  "Release OVERLAY's decoded image and preview bytes, then delete it."
+  (when-let* ((image (overlay-get overlay 'display)))
+    (image-flush image t))
+  (overlay-put overlay 'display nil)
+  (delete-overlay overlay))
+
+(defun sov-markdown--image-preview-modified (overlay after &rest _)
+  "Release OVERLAY after a text change leaves its image link empty."
+  (when (and after
+             (overlay-buffer overlay)
+             (= (overlay-start overlay) (overlay-end overlay)))
+    (with-current-buffer (overlay-buffer overlay)
+      (setq markdown-inline-image-overlays
+            (delq overlay markdown-inline-image-overlays)))
+    (sov-markdown--release-image-preview overlay)))
+
+(defun sov-markdown--watch-image-preview (overlay)
+  "Arrange for OVERLAY to release its preview when its link is deleted."
+  ;; Evaporation would delete the overlay before its after-change callback.
+  ;; Keep an empty overlay alive until that callback releases its resources.
+  (overlay-put overlay 'evaporate nil)
+  (let ((hooks (overlay-get overlay 'modification-hooks)))
+    (unless (memq #'sov-markdown--image-preview-modified hooks)
+      (overlay-put overlay 'modification-hooks
+                   (cons #'sov-markdown--image-preview-modified hooks)))))
+
+(defun sov-markdown--clear-image-previews ()
+  "Release this buffer's decoded images and in-memory preview bytes."
+  (dolist (overlay (bound-and-true-p markdown-inline-image-overlays))
+    (sov-markdown--release-image-preview overlay))
+  (setq markdown-inline-image-overlays nil))
+
 (defun sov-markdown--render-images ()
   "Create local image overlays before applying a one-shot fit."
   (when (display-images-p)
@@ -154,14 +237,10 @@ The default 1.0 keeps small images at their original size."
     (let ((image-scaling-factor sov-markdown-image-scale)
           (markdown-display-remote-images nil)
           (markdown-max-image-size nil))
-      (dolist (overlay markdown-inline-image-overlays)
-        (when (overlay-buffer overlay)
-          (image-flush (overlay-get overlay 'display) t))
-        (delete-overlay overlay))
-      (setq markdown-inline-image-overlays nil)
+      (sov-markdown--clear-image-previews)
       (markdown-display-inline-images))
     (dolist (overlay markdown-inline-image-overlays)
-      (overlay-put overlay 'evaporate t))))
+      (sov-markdown--watch-image-preview overlay))))
 
 (defun sov-markdown-fit-images ()
   "Fit every local image once to the current window, resetting manual zoom."
@@ -218,6 +297,7 @@ Emacs's image library detects the binary format and supplies the extension."
           (let ((overlay (make-overlay start (point))))
             (overlay-put overlay 'display image)
             (overlay-put overlay 'face 'default)
+            (sov-markdown--watch-image-preview overlay)
             (push overlay markdown-inline-image-overlays)
             (sov-markdown--fit-image overlay (sov-markdown--image-window-limits))))))))
 
@@ -247,6 +327,8 @@ Emacs's image library detects the binary format and supplies the extension."
 
 (defun sov-markdown-image-setup ()
   "Set up clipboard image insertion and existing image previews."
+  (add-hook 'kill-buffer-hook #'sov-markdown--clear-image-previews nil t)
+  (add-hook 'change-major-mode-hook #'sov-markdown--clear-image-previews nil t)
   ;; Share markdown-mode's renderer across Emacs 30 and 31.  Do not create
   ;; a second set of previews with markdown-ts-mode's native renderer.
   (when (derived-mode-p 'markdown-ts-mode)
