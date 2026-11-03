@@ -5,6 +5,15 @@
 ;; completion, file navigation, and fast jump motions.
 
 
+;;; Session
+
+;; Save modified buffers as needed, kill every buffer, and then terminate the
+;; Emacs daemon or graphical session.  `confirm-kill-emacs' in `sov-core.el'
+;; keeps a final confirmation before Emacs exits.
+(evil-define-key '(normal visual motion) 'global
+  (kbd "<leader>qq") #'save-buffers-kill-emacs)
+
+
 ;;; Key discovery
 
 ;; `which-key' displays the available keys after a prefix is pressed, making it
